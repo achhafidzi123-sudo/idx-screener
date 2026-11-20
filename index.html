@@ -216,7 +216,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
       <div class="f"><label>Cari saham</label><input id="a-q" type="search" placeholder="mis. BBCA"></div>
     </div>
     <div class="rsif"><label class="chk" style="margin:0"><input type="checkbox" id="a-rsion" checked> Hanya saham dengan RSI(14) ≤</label>
-      <input id="a-rsi" inputmode="decimal" value="20" style="width:70px;padding:6px 8px"></div>
+      <input id="a-rsi" inputmode="decimal" value="30" style="width:70px;padding:6px 8px"></div>
     <div class="nm" id="a-rsiinfo" style="margin-top:4px"></div>
     <label class="chk"><input type="checkbox" id="a-hist"> Tampilkan juga akumulasi yang sudah berhenti</label>
   </div>
@@ -372,7 +372,7 @@ function card(r,lbl){const mx=Math.max(...r.tail.map(t=>Math.abs(t.v)),1);
   return `<div class="card"><div class="top"><div><div class="tk">${esc(r.k)} <span class="nm">← broker</span> ${esc(r.b)}</div>
       <div class="nm">${bname(r.b)?esc(bname(r.b))+' · ':''}${tgl(r.from)} – ${tgl(r.to)}</div></div>
       <div class="px"><span class="pill" style="background:${r.active?'var(--ac)':'var(--card2)'};color:${r.active?'#04210f':'var(--mut)'}">${r.active?'● AKTIF':'Berhenti'}</span></div></div>
-      ${r.rsi?`<div class="fv" style="margin-top:6px">RSI(14) <b class="${r.rsi.v<=20?'r':''}">${fmt(r.rsi.v,2)}</b> per ${tgl(r.rsi.d)}</div>`:''}
+      ${r.rsi?`<div class="fv" style="margin-top:6px">RSI(14) <b class="${r.rsi.v<=(num($('a-rsi').value)||30)?'r':''}">${fmt(r.rsi.v,2)}</b> per ${tgl(r.rsi.d)}</div>`:''}
       <div class="stats"><div class="st"><small>Hari beruntun</small><b class="g">${r.len} hari</b></div>
       <div class="st"><small>Total ${lbl}</small><b>Rp ${rupiah(r.tot)}</b></div>
       <div class="st"><small>Rata-rata/hari</small><b>Rp ${rupiah(r.avg)}</b></div></div>
