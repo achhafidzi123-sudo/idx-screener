@@ -461,7 +461,7 @@ async function loadAuto(){
   if(B&&B.days&&Object.keys(B.days).length){
     const days=Object.keys(B.days).sort(),rows=[];
     days.forEach(d=>{const day=B.days[d];for(const k in day)day[k].forEach(([b,buy,sell])=>rows.push({d,k,b,buy:+buy,net:buy-sell}));});
-    if(rows.length){BRK=rows;BRK_DAYS=days;brkDemo=false;
+    if(rows.length){BRK=rows;BRK_DAYS=(B.calendar&&B.calendar.length)?B.calendar:days;brkDemo=false;
       const st=(B.storeMin||5e8)/1e9;
       banner('broker','auto',`<b>● Otomatis</b> · ${Object.keys(B.days[days.at(-1)]).length} saham likuid dipantau · ${days.length} hari bursa s.d. <b>${tgl(days.at(-1))}</b><br><span class="nm">Diperbarui ${esc(B.updated||'')} · ${esc(B.source||'')}${B.topN?` · gratis: ${B.topN} pembeli teratas per saham, net beli dihitung konservatif (tidak pernah dilebihkan)`:''}</span>`);renderAkum();}
   }

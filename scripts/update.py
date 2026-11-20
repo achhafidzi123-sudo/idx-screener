@@ -32,6 +32,8 @@ UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, 
 
 PRICE_DAYS = 120            # hari bursa yang disimpan untuk RSI & grafik
 FUND_MAX_AGE_DAYS = 6       # fundamental diambil ulang jika lebih tua dari ini
+FUND_BUDGET_MIN = int(os.getenv("FUND_BUDGET_MIN", "20"))      # maks menit per run untuk fundamental
+BROKER_BUDGET_MIN = int(os.getenv("BROKER_BUDGET_MIN", "30"))  # maks menit per run untuk broker summary
 BROKER_KEEP_DAYS = 25       # hari bursa broker summary yang disimpan
 BROKER_STORE_MIN = 5e8      # simpan baris broker jika beli atau net >= Rp 500 juta
 BROKER_MIN_TURNOVER = float(os.getenv("BROKER_MIN_TURNOVER", "1e9"))  # hanya saham dgn nilai transaksi >= ini
@@ -218,56 +220,69 @@ def get_prices(session, codes):
 # 3. FUNDAMENTAL (mingguan)
 # --------------------------------------------------------------------------------------
 def get_fundamentals(codes, names):
+    """Data per saham disimpan dengan tanggal ambil ('t'). Setiap run hanya mengambil saham yang
+    datanya belum ada / lebih tua dari FUND_MAX_AGE_DAYS, maksimal FUND_BUDGET_MIN menit,
+    dan menyimpan hasil secara bertahap. Sisanya dilanjutkan run berikutnya."""
     path = DATA / "fundamentals.json"
     old = read_json(path, {})
-    force = os.getenv("FORCE_FUNDAMENTALS") == "1"
-    try:
-        age = (now_wib().date() - datetime.strptime(old.get("date", "2000-01-01"), "%Y-%m-%d").date()).days
-    except ValueError:
-        age = 999
-    if not force and age < FUND_MAX_AGE_DAYS and old.get("data"):
-        log(f"3) Fundamental masih baru ({age} hari), dilewati.")
+    data = {k: v for k, v in old.get("data", {}).items() if k in set(codes)}
+    today = now_wib().date()
+
+    def age(code):
+        try:
+            return (today - datetime.strptime(data[code].get("t", "2000-01-01"), "%Y-%m-%d").date()).days
+        except (KeyError, ValueError):
+            return 9999
+
+    todo = sorted((c for c in codes if age(c) >= FUND_MAX_AGE_DAYS), key=age, reverse=True)
+    if not todo:
+        log("3) Fundamental semua saham masih baru, dilewati.")
         return
     try:
         import yfinance as yf
     except ImportError:
         log("3) yfinance tidak terpasang, fundamental dilewati.")
         return
-    log(f"3) Fundamental {len(codes)} saham (mingguan)…")
+    log(f"3) Fundamental: {len(todo)} saham perlu diperbarui (maks {FUND_BUDGET_MIN} menit)…")
+    deadline = time.time() + FUND_BUDGET_MIN * 60
 
     def one(code):
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 info = yf.Ticker(f"{code}.JK").info or {}
                 if not info:
                     return code, None
                 dr = clean(info.get("dividendRate")) or clean(info.get("trailingAnnualDividendRate"))
+                roe, der = clean(info.get("returnOnEquity")), clean(info.get("debtToEquity"))
                 return code, {
                     "n": info.get("longName") or info.get("shortName") or names.get(code, ""),
                     "s": info.get("sector") or "Lainnya",
                     "eps": clean(info.get("trailingEps")),
                     "bv": clean(info.get("bookValue")),
                     "div": dr,
-                    "roe": round(clean(info.get("returnOnEquity")) * 100, 2) if clean(info.get("returnOnEquity")) is not None else None,
-                    "der": round(clean(info.get("debtToEquity")) / 100, 2) if clean(info.get("debtToEquity")) is not None else None,
+                    "roe": round(roe * 100, 2) if roe is not None else None,
+                    "der": round(der / 100, 2) if der is not None else None,
                     "sh": clean(info.get("sharesOutstanding")),
+                    "t": today.strftime("%Y-%m-%d"),
                 }
             except Exception:  # noqa: BLE001
                 time.sleep(2 + attempt * 3)
         return code, None
 
-    data = dict(old.get("data", {}))
-    ok = 0
+    ok, done = 0, 0
     with ThreadPoolExecutor(max_workers=4) as ex:
-        for i, (code, d) in enumerate(ex.map(one, codes), 1):
-            if d:
-                data[code] = d
-                ok += 1
-            if i % 100 == 0:
-                log(f"  {i}/{len(codes)}")
-    data = {k: v for k, v in data.items() if k in set(codes)}
-    write_json(path, {"date": now_wib().strftime("%Y-%m-%d"), "source": "Yahoo Finance", "data": data})
-    log(f"  Fundamental diperbarui: {ok} saham")
+        for k in range(0, len(todo), 40):
+            if time.time() > deadline:
+                log(f"  Batas waktu tercapai, {len(todo) - done} saham dilanjutkan run berikutnya.")
+                break
+            for code, d in ex.map(one, todo[k:k + 40]):
+                done += 1
+                if d:
+                    data[code] = d
+                    ok += 1
+            write_json(path, {"date": today.strftime("%Y-%m-%d"), "source": "Yahoo Finance", "data": data})
+            log(f"  {done}/{len(todo)} (berhasil {ok})")
+    log(f"  Fundamental diperbarui: {ok} saham, total tersimpan {len(data)}")
 
 
 # --------------------------------------------------------------------------------------
@@ -401,10 +416,10 @@ def get_broker(prices):
     store = read_json(path, {"days": {}})
     days = store.get("days", {}) if store.get("source") in (None, source) else {}   # ganti sumber -> mulai baru
     dates = prices["dates"]
+    want = dates[-max(BROKER_BACKFILL, 1):]
     if days:
-        todo = [d for d in dates[-BROKER_KEEP_DAYS:] if d > max(days)]
-    else:
-        todo = dates[-BROKER_BACKFILL:]
+        want = sorted(set(want) | {d for d in dates[-BROKER_KEEP_DAYS:] if d > max(days)})
+    todo = sorted((d for d in want if d not in days), reverse=True)   # terbaru dulu
     if not todo:
         log(f"4) Broker summary ({source}) sudah lengkap.")
         return
@@ -413,7 +428,20 @@ def get_broker(prices):
     log(f"4) Broker summary dari {source}: {len(todo)} hari × {len(cands)} saham likuid")
 
     stop = False
+    deadline = time.time() + BROKER_BUDGET_MIN * 60
+
+    def save():
+        keep = sorted(days)[-BROKER_KEEP_DAYS:]
+        write_json(path, {"updated": now_wib().strftime("%d %b %Y %H:%M WIB"), "source": source,
+                          "topN": None if token else IPOT_ROWS,
+                          "minTurnover": BROKER_MIN_TURNOVER, "storeMin": BROKER_STORE_MIN,
+                          "calendar": [d for d in dates if keep and d >= keep[0]],
+                          "days": {d: days[d] for d in keep}})
+
     for day in todo:
+        if time.time() > deadline:
+            log("  Batas waktu tercapai, sisa hari dilanjutkan run berikutnya.")
+            break
         res, failed, unpublished = {}, 0, 0
         with ThreadPoolExecutor(max_workers=workers) as ex:
             for code, rows in zip(cands, ex.map(lambda c: fetch(s, c, day), cands)):
@@ -429,16 +457,12 @@ def get_broker(prices):
             log("  ⚠ Kuota API IndexAlpha habis.")
         if unpublished > len(cands) // 2 or not res:
             log(f"  {day}: data broker belum terbit / gagal ({failed} gagal), dicoba lagi pada jadwal berikutnya")
-            break   # jangan simpan hari yang belum lengkap; hari berikutnya juga pasti belum ada
+            continue   # jangan simpan hari yang belum lengkap
         days[day] = res
+        save()
         log(f"  {day}: {len(res)} saham tersimpan, {failed} gagal")
         if stop:
             break
-    keep = sorted(days)[-BROKER_KEEP_DAYS:]
-    write_json(path, {"updated": now_wib().strftime("%d %b %Y %H:%M WIB"), "source": source,
-                      "topN": None if token else IPOT_ROWS,
-                      "minTurnover": BROKER_MIN_TURNOVER, "storeMin": BROKER_STORE_MIN,
-                      "days": {d: days[d] for d in keep}})
 
 
 def main():
