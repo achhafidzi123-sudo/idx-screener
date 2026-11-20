@@ -469,7 +469,7 @@ function renderRSI(){if(!PRC)return;
     for(let i=L-1;i>=Math.max(0,L-look);i--)if(rs[i]<=th&&(!hit||rs[i]<hit.v))hit={v:rs[i],d:ds[i]};
     if(!hit&&!q)continue;
     res.push({k,val:VAL?VAL[k]:NaN,rsi:rs[L-1],hit,close:cl[L-1],chg:(cl[L-1]/cl[Math.max(0,L-6)]-1)*100,date:ds[L-1],tail:rs.slice(-40)});}
-  res.sort((a,b)=>(a.hit?a.hit.v:999)-(b.hit?b.hit.v:999));
+  res.sort((a,b)=>(isFinite(b.val)?b.val:-1)-(isFinite(a.val)?a.val:-1)||(a.hit?a.hit.v:999)-(b.hit?b.hit.v:999));
   $('r-res').textContent=q?`Hasil pencarian "${q}": ${res.length} saham (${res.filter(r=>r.hit).length} dengan RSI ≤ ${fmt(th)})`:`${res.length} saham RSI(${n}) ≤ ${fmt(th)}`+(short.length?` · ${short.length} saham datanya kurang`:'')+(VAL?` · dari ${Object.keys(by).length} saham`:'');
   const tile=r=>`<div class="rt"><div class="tk">${esc(r.k)}</div><div class="nm">${fmt(r.close,0)}<br><span class="${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}%</span></div>
     <div class="rr"><small>RSI kini</small><b class="${r.rsi<=th?'r':''}">${fmt(r.rsi,2)}</b></div>
