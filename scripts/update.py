@@ -396,30 +396,41 @@ def ipot_rows(page):
     return out
 
 
+IPOT_ERRORS = {}   # penyebab kegagalan, untuk dicatat di log
+
+
+def _ipot_err(key):
+    IPOT_ERRORS[key] = IPOT_ERRORS.get(key, 0) + 1
+
+
 def ipot_fetch(session, code, day):
     """day = 'YYYY-MM-DD'. Return rows | [] | 'UNPUBLISHED' | None (gagal)."""
     y, m, d = day.split("-")
     md = f"{m}/{d}/{y}"
-    for attempt in range(5):
+    for attempt in range(4):
         try:
             r = session.get(IPOT_URL, params={"code": code, "start": md, "end": md, "fd": "all", "board": "all"},
-                            timeout=30, headers={**UA, "Referer": "https://www.indopremier.com/"})
+                            timeout=15, headers={**UA, "Referer": "https://www.indopremier.com/"})
             if r.status_code == 404:          # server IPOT kadang 404 palsu sesaat -> ulangi
+                _ipot_err("HTTP 404")
                 time.sleep(0.5 * 2 ** attempt)
                 continue
             if r.status_code != 200:
+                _ipot_err(f"HTTP {r.status_code}")
                 time.sleep(2)
                 continue
             page = ipot_parse(r.text)
             if page == "INVALID":
                 return []
             if page is None:
+                _ipot_err("halaman tanpa tabel: " + r.text[:120].replace("\n", " "))
                 time.sleep(2)
                 continue
             if not page["buyers"] and not page["sellers"] and (page["total"] or 0) > 0:
                 return "UNPUBLISHED"        # ada transaksi tapi daftar broker belum terbit
             return ipot_rows(page)
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            _ipot_err(f"{type(e).__name__}: {str(e)[:100]}")
             time.sleep(2)
     return None
 
@@ -467,6 +478,11 @@ def get_broker(prices):
     # Hanya saham likuid: broker mustahil net buy Rp 1 M/hari di saham yang total transaksinya < Rp 1 M
     cands = sorted(c for c, v in prices["value5d"].items() if v >= BROKER_MIN_TURNOVER)
     log(f"4) Broker summary dari {source}: {len(todo)} hari × {len(cands)} saham likuid")
+    probe = fetch(s, "BBCA", todo[-1])
+    log(f"  Uji koneksi (BBCA {todo[-1]}): {'OK, ' + str(len(probe)) + ' broker' if isinstance(probe, list) else probe}")
+    if probe is None:
+        log(f"  Sumber tidak bisa diakses, broker summary dilewati run ini. Penyebab: {IPOT_ERRORS or 'tidak diketahui'}")
+        return
 
     stop = False
     deadline = time.time() + BROKER_BUDGET_MIN * 60
@@ -498,10 +514,16 @@ def get_broker(prices):
             log("  ⚠ Kuota API IndexAlpha habis.")
         if unpublished > len(cands) // 2 or not res:
             log(f"  {day}: data broker belum terbit / gagal ({failed} gagal), dicoba lagi pada jadwal berikutnya")
+            if IPOT_ERRORS:
+                log(f"    penyebab gagal: {IPOT_ERRORS}")
+                IPOT_ERRORS.clear()
             continue   # jangan simpan hari yang belum lengkap
         days[day] = res
         save()
         log(f"  {day}: {len(res)} saham tersimpan, {failed} gagal")
+        if IPOT_ERRORS:
+            log(f"    penyebab gagal: {IPOT_ERRORS}")
+            IPOT_ERRORS.clear()
         if stop:
             break
 
