@@ -81,7 +81,20 @@ main{max-width:none!important;margin-left:240px!important;margin-right:0!importa
 #p-rsi.pane.on{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:14px;align-items:start}
 #p-rsi #b-rsi{grid-column:1/-1;grid-row:1}#p-rsi #r-box{grid-column:2;grid-row:2/4;position:sticky;top:10px}
 #p-rsi #r-meta{grid-column:1;grid-row:2;align-self:start}#p-rsi #r-list{grid-column:1;grid-row:3}
-#p-rsi #r-box .fgrid{grid-template-columns:1fr}}
+#p-rsi #r-box .fgrid{grid-template-columns:1fr}
+#p-harm.pane.on{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:14px;align-items:start}
+#p-harm #h-box{grid-column:2;grid-row:1/3;position:sticky;top:10px}
+#p-harm #h-meta{grid-column:1;grid-row:1}#p-harm #h-list{grid-column:1;grid-row:2}
+#p-harm #h-box .fgrid{grid-template-columns:1fr}}
+#h-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+#h-list>.empty{grid-column:1/-1}
+.hcard{margin:0!important;padding:8px 10px!important;text-align:left}
+.hcard .tk{font-size:15px;font-weight:800}.hcard .nm{font-size:11px;margin-bottom:2px}
+.hb{font-size:10px;font-weight:700;margin-left:4px}
+.hsv{width:100%;height:54px;display:block;margin:4px 0 2px}
+.hcard .rr{margin-top:4px}.hcard .rr small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
+.hcard .rr b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
+.hhelp{margin-top:10px}.hhelp summary{cursor:pointer;color:var(--dora2,#33b5f5);font-size:12px}
 svg.spark{width:100%;height:60px;display:block;margin-top:8px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .modal.on{display:flex}
@@ -198,6 +211,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
     <button class="tab on" data-t="cari">🔍 Cari</button>
     <button class="tab" data-t="akum">🏦 Akumulasi</button>
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
+    <button class="tab" data-t="harm">🔷 Harmonik</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -264,6 +278,32 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
 </section>
 
 <!-- ================= FUNDAMENTAL ================= -->
+<section class="pane" id="p-harm">
+  <div class="box" id="h-box">
+    <h3>Kriteria pola harmonik</h3>
+    <div class="fgrid">
+      <div class="f"><label>Pola</label><select id="h-pat"><option value="">Semua pola</option><option>Gartley</option><option>Bat</option><option>Alt Bat</option><option>Butterfly</option><option>Crab</option><option>Deep Crab</option><option>Shark</option><option>Cypher</option><option>5-0</option><option>Nen Star</option><option>Stingray</option><option>ABCD</option><option>Three Drives</option></select></div>
+      <div class="f"><label>Arah</label><select id="h-dir"><option value="">Bullish &amp; Bearish</option><option value="bull">Bullish (potensi naik)</option><option value="bear">Bearish (potensi turun)</option></select></div>
+      <div class="f"><label>Status</label><select id="h-st"><option value="">Semua</option><option value="soon">Akan terbentuk (di/dekat PRZ)</option><option value="done">Sudah terbentuk</option></select></div>
+      <div class="f"><label>Ayunan zigzag minimal (%)</label><input id="h-zz" inputmode="decimal" value="6"></div>
+      <div class="f"><label>Toleransi rasio (%)</label><input id="h-tol" inputmode="decimal" value="8"></div>
+      <div class="f"><label>Jarak "mendekati" PRZ (%)</label><input id="h-prox" inputmode="decimal" value="3"></div>
+      <div class="f"><label>Titik D terbentuk dalam … hari</label><input id="h-days" inputmode="numeric" value="10"></div>
+      <div class="f"><label>Min. nilai transaksi/hari (Rp miliar)</label><input id="h-val" inputmode="decimal" value="1"></div>
+      <div class="f"><label>Cari saham</label><input id="h-q" type="search" placeholder="Kode…"></div>
+    </div>
+    <details class="hhelp"><summary>Rasio yang dipakai &amp; catatan</summary>
+      <div class="nm" style="line-height:1.6;margin-top:6px">Titik X-A-B-C-D diambil dari ayunan harga <b>penutupan</b> harian (zigzag). Pola dicocokkan dengan rasio Fibonacci, dengan toleransi yang bisa Anda atur.<br>
+      <b>Gartley</b> B 0,618 XA · D 0,786 XA &nbsp;|&nbsp; <b>Bat</b> B 0,382–0,5 · D 0,886 XA &nbsp;|&nbsp; <b>Alt Bat</b> B 0,382 · D 1,13 XA<br>
+      <b>Butterfly</b> B 0,786 · D 1,272–1,618 XA &nbsp;|&nbsp; <b>Crab</b> B 0,382–0,618 · D 1,618 XA &nbsp;|&nbsp; <b>Deep Crab</b> B 0,886 · D 1,618 XA<br>
+      <b>Shark</b> D 0,886–1,13 XC &nbsp;|&nbsp; <b>Cypher</b> C 1,272–1,414 XA · D 0,786 XC &nbsp;|&nbsp; <b>5-0</b> B 1,13–1,618 XA · D 0,5 BC<br>
+      <b>Stingray*</b> D 1,272–1,414 XA (rasio dari Anda) · <b>Nen Star*</b> · <b>ABCD</b> CD = 1,272–1,618 BC · <b>Three Drives</b> korelasi 0,618–0,786, drive 1,272–1,618.<br>
+      * Tanda bintang = definisi varian, bukan baku tunggal. Ini alat bantu penyaring, bukan sinyal beli/jual.</div></details>
+  </div>
+  <div class="meta" id="h-meta"><span id="h-res"></span></div>
+  <div id="h-list"></div>
+</section>
+
 <section class="pane" id="p-fund">
   <div class="banner" id="b-fund"><b>Memuat data…</b> Data fundamental diambil otomatis. Jika pesan ini tidak hilang, muat ulang halaman.</div>
   <div class="row" style="margin-bottom:6px">
@@ -491,6 +531,101 @@ function renderRSI(){if(!PRC)return;
     :q?`<div class="empty">Saham "${esc(q)}" tidak ditemukan${minVal>0?' atau nilai transaksinya di bawah filter minimal':''}.</div>`:`<div class="empty">Tidak ada saham dengan RSI ≤ ${fmt(th)} dalam periode ini.</div>`;}
 ['r-th','r-per','r-look','r-q','r-val'].forEach(id=>$(id).addEventListener('input',renderRSI));
 
+/* ======================= HARMONIK ======================= */
+const HP=[
+ {n:'Gartley',b:[.618,.618],c:[.382,.886],d:[['XA',.786,.786],['BC',1.272,1.618]]},
+ {n:'Bat',b:[.382,.5],c:[.382,.886],d:[['XA',.886,.886],['BC',1.618,2.618]]},
+ {n:'Alt Bat',b:[.382,.382],c:[.382,.886],d:[['XA',1.13,1.13],['BC',2,3.618]]},
+ {n:'Butterfly',b:[.786,.786],c:[.382,.886],d:[['XA',1.272,1.618],['BC',1.618,2.618]]},
+ {n:'Crab',b:[.382,.618],c:[.382,.886],d:[['XA',1.618,1.618],['BC',2.618,3.618]]},
+ {n:'Deep Crab',b:[.886,.886],c:[.382,.886],d:[['XA',1.618,1.618],['BC',2,3.618]]},
+ {n:'Shark',b:[.382,.618],c:[1.13,1.618],d:[['XC',.886,1.13],['BC',1.618,2.24]]},
+ {n:'Cypher',b:[.382,.618],cx:[1.272,1.414],d:[['XC',.786,.786]]},
+ {n:'5-0',b:[1.13,1.618],c:[1.618,2.24],d:[['BC',.5,.5]]},
+ {n:'Nen Star',v:1,b:[.382,.786],c:[1.13,1.414],d:[['XA',1.272,1.272],['BC',1.272,2.618]]},
+ {n:'Stingray',v:1,b:[.382,.618],c:[.382,.886],d:[['XA',1.272,1.414]]},
+ {n:'ABCD',abcd:1,c:[.618,.886],d:[['BC',1.272,1.618]]},
+ {n:'Three Drives',td:1,r:[.618,.786],e:[1.272,1.618]}
+];
+function zigzag(cl,th){const P=[];let dir=0,hi={i:0,p:cl[0]},lo={i:0,p:cl[0]};
+  for(let i=1;i<cl.length;i++){const p=cl[i];
+    if(dir===0){if(p>hi.p)hi={i,p};if(p<lo.p)lo={i,p};
+      if(p>=lo.p*(1+th)){P.push({i:lo.i,p:lo.p,t:'L'});dir=1;hi={i,p};}
+      else if(p<=hi.p*(1-th)){P.push({i:hi.i,p:hi.p,t:'H'});dir=-1;lo={i,p};}}
+    else if(dir===1){if(p>hi.p)hi={i,p};else if(p<=hi.p*(1-th)){P.push({i:hi.i,p:hi.p,t:'H'});dir=-1;lo={i,p};}}
+    else{if(p<lo.p)lo={i,p};else if(p>=lo.p*(1+th)){P.push({i:lo.i,p:lo.p,t:'L'});dir=1;hi={i,p};}}}
+  return{P,dir,ex:dir===1?hi:dir===-1?lo:null};}
+const hIn=(r,lo,hi,t)=>r>=lo*(1-t)&&r<=hi*(1+t);
+const hMid=a=>(a[0]+a[1])/2;
+function hPrz(sp,X,A,B,C,t){let lo=-Infinity,hi=Infinity;
+  for(const [base,a,b] of sp.d){const f=r=>base==='XA'?A-r*(A-X):base==='BC'?C-r*(C-B):C-r*(C-X);
+    const u=f(a*(1-t)),v=f(b*(1+t));lo=Math.max(lo,Math.min(u,v));hi=Math.min(hi,Math.max(u,v));}
+  return lo<=hi?[lo,hi]:null;}
+// pts = titik sebelum D (harga). Hasil: {bull,prz,sk} atau null
+function hFit(sp,pts,t){
+  if(sp.td){const p=pts,s=p[4]>p[3]?1:-1,v=(a,b)=>(p[a]-p[b])*s;
+    const d1=v(0,1),c1=v(2,1),d2=v(2,3),c2=v(4,3);
+    if(!(d1>0&&c1>0&&d2>0&&c2>0))return null;
+    const r1=c1/d1,e=d2/c1,r2=c2/d2;
+    if(!hIn(r1,sp.r[0],sp.r[1],t)||!hIn(e,sp.e[0],sp.e[1],t)||!hIn(r2,sp.r[0],sp.r[1],t))return null;
+    const u=p[4]-s*sp.e[0]*(1-t)*c2,w=p[4]-s*sp.e[1]*(1+t)*c2;
+    return{bull:s>0,prz:[Math.min(u,w),Math.max(u,w)],sk:1-(Math.abs(r1-hMid(sp.r))/hMid(sp.r)+Math.abs(r2-hMid(sp.r))/hMid(sp.r)+Math.abs(e-hMid(sp.e))/hMid(sp.e))/3};}
+  if(sp.abcd){const [A,B,C]=pts,bull=C>B;if((A>B)!==bull)return null;
+    const rc=(C-B)/(A-B);if(!hIn(rc,sp.c[0],sp.c[1],t))return null;
+    const prz=hPrz(sp,0,A,B,C,t);return prz?{bull,prz,sk:1-Math.abs(rc-hMid(sp.c))/hMid(sp.c)}:null;}
+  const [X,A,B,C]=pts,bull=C>B,xa=A-X;if(!xa||(xa>0)!==bull||(A>B)!==bull)return null;
+  const rb=(A-B)/xa;if(!hIn(rb,sp.b[0],sp.b[1],t))return null;
+  let rc,cm;
+  if(sp.cx){rc=(C-X)/xa;cm=hMid(sp.cx);if(!hIn(rc,sp.cx[0],sp.cx[1],t))return null;}
+  else{rc=(C-B)/(A-B);cm=hMid(sp.c);if(!(rc>0)||!hIn(rc,sp.c[0],sp.c[1],t))return null;}
+  const prz=hPrz(sp,X,A,B,C,t);if(!prz)return null;
+  return{bull,prz,sk:1-(Math.abs(rb-hMid(sp.b))/hMid(sp.b)+Math.abs(rc-cm)/cm)/2};}
+function harmScan(cl,o){
+  const out=[],{P,dir,ex}=zigzag(cl,o.zz),L=cl.length,now=cl[L-1],t=o.tol;
+  for(const sp of HP){
+    if(o.pat&&o.pat!==sp.n)continue;
+    const np=sp.td?5:sp.abcd?3:4;let got=false;
+    if(P.length>=np+1){const w=P.slice(-(np+1)),D=w[np],f=hFit(sp,w.slice(0,np).map(x=>x.p),t);
+      if(f&&(f.bull?D.t==='L':D.t==='H')&&D.p>=f.prz[0]*(1-t/2)&&D.p<=f.prz[1]*(1+t/2)&&L-1-D.i<=o.days){
+        out.push({n:sp.n,v:sp.v,bull:f.bull,prz:f.prz,sk:f.sk,st:'done',pts:w,now});got=true;}}
+    if(!got&&P.length>=np&&ex){const w=P.slice(-np),f=hFit(sp,w.map(x=>x.p),t);
+      if(f&&(f.bull?dir===-1:dir===1)){
+        const z=f.prz,inz=ex.p>=z[0]&&ex.p<=z[1];
+        const near=f.bull?(ex.p>z[1]&&(now-z[1])/now<=o.prox):(ex.p<z[0]&&(z[0]-now)/now<=o.prox);
+        if(inz||near)out.push({n:sp.n,v:sp.v,bull:f.bull,prz:z,sk:f.sk,st:inz?'zone':'near',pts:w.concat([{i:ex.i,p:ex.p}]),now});}}
+  }
+  return out;}
+function harmSvg(r,L){const pts=r.pts,lab=r.n==='Three Drives'?['0','1','2','3','4','5']:r.n==='ABCD'?['A','B','C','D']:['X','A','B','C','D'];
+  const all=pts.map(x=>x.p).concat([r.now]),mn=Math.min(...all),mx=Math.max(...all),i0=pts[0].i,sp=Math.max(1,L-1-i0);
+  const X=i=>6+(i-i0)/sp*88,Y=p=>6+(1-(p-mn)/((mx-mn)||1))*40;
+  let d=pts.map((x,k)=>`${k?'L':'M'}${X(x.i).toFixed(1)},${Y(x.p).toFixed(1)}`).join(' ');
+  const last=pts[pts.length-1];
+  const tail=r.st==='done'||last.i<L-1?`<path d="M${X(last.i).toFixed(1)},${Y(last.p).toFixed(1)} L${X(L-1).toFixed(1)},${Y(r.now).toFixed(1)}" stroke="rgba(255,255,255,.35)" stroke-dasharray="2 2" fill="none"/>`:'';
+  const tx=pts.map((x,k)=>`<text x="${X(x.i).toFixed(1)}" y="${(Y(x.p)+(x.t==='H'||(k<pts.length-1&&pts[k+1].p<x.p)?-2:8)).toFixed(1)}" font-size="7" text-anchor="middle" fill="#9fdcff">${lab[k]||''}</text>`).join('');
+  return `<svg class="hsv" viewBox="0 0 100 54" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="#33b5f5" stroke-width="1.4"/>${tail}${tx}</svg>`;}
+let HC=null,HCsrc=null;
+function renderHarm(){if(!PRC||!$('h-list'))return;
+  if(HCsrc!==PRC){const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));HC={};
+    for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1);HC[k]=a.map(x=>x[1]);}HCsrc=PRC;}
+  const o={zz:(num($('h-zz').value)||6)/100,tol:(num($('h-tol').value)||8)/100,prox:(num($('h-prox').value)||3)/100,days:parseInt($('h-days').value)||10,pat:$('h-pat').value};
+  const minVal=(num($('h-val').value)||0)*1e9,q=$('h-q').value.trim().toUpperCase(),dirF=$('h-dir').value,stF=$('h-st').value;
+  let res=[];
+  for(const k in HC){if(q&&!k.includes(q))continue;if(VAL&&minVal>0&&k in VAL&&VAL[k]<minVal)continue;
+    const cl=HC[k];if(cl.length<40)continue;
+    for(const r of harmScan(cl,o)){if(dirF==='bull'&&!r.bull||dirF==='bear'&&r.bull)continue;
+      if(stF==='soon'&&r.st==='done'||stF==='done'&&r.st!=='done')continue;r.k=k;r.L=cl.length;res.push(r);}}
+  res.sort((a,b)=>((VAL&&VAL[b.k])||0)-((VAL&&VAL[a.k])||0)||b.sk-a.sk);
+  const ST={done:'Sudah terbentuk',zone:'Di zona PRZ',near:'Mendekati PRZ'};
+  $('h-res').textContent=`${res.length} pola ditemukan dari ${Object.keys(HC).length} saham`+(res.length>300?' · menampilkan 300 teratas':'');
+  $('h-list').innerHTML=res.length?res.slice(0,300).map(r=>`<div class="card hcard"><div class="tk">${esc(r.k)} <span class="hb ${r.bull?'g':'r'}">${r.bull?'▲ Bullish':'▼ Bearish'}</span></div>
+    <div class="nm">${esc(r.n)}${r.v?'*':''} · ${ST[r.st]}</div>${harmSvg(r,r.L)}
+    <div class="rr"><small>Harga kini</small><b>Rp ${fmt(r.now,0)}</b></div>
+    <div class="rr"><small>Zona PRZ (D)</small><b>${fmt(r.prz[0],0)} – ${fmt(r.prz[1],0)}</b></div>
+    <div class="rr"><small>Kecocokan</small><b>${Math.round(r.sk*100)}%</b></div>
+    ${VAL&&isFinite(VAL[r.k])?`<div class="rr"><small>Nilai 5h</small><b>Rp ${rupiah(VAL[r.k])}</b></div>`:''}</div>`).join('')
+    :`<div class="empty">Belum ada saham yang cocok. Coba perbesar toleransi, kecilkan ayunan zigzag, atau ubah filter.</div>`;}
+['h-zz','h-tol','h-prox','h-days','h-val','h-q','h-pat','h-dir','h-st'].forEach(id=>$(id)&&$(id).addEventListener('input',renderHarm));
+
 /* ======================= FUNDAMENTAL ======================= */
 const DEMO_FUND=`Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap
 BBCA,Bank Central Asia,Keuangan,9500,21,4.4,21,2.9,0,1170
@@ -669,7 +804,7 @@ async function loadAuto(){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
       for(let i=a.length-1;i>=0;i--)if(a[i]!=null){lastClose[k]=a[i];break;}}
     if(rows.length){PRC=rows;VAL=P.value5d||null;prcDemo=false;
-      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();}
+      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();renderHarm();}
   }
   if(F&&F.data&&Object.keys(F.data).length&&Object.keys(lastClose).length){
     const rows=[];for(const k in F.data){const f=F.data[k],h=lastClose[k];if(!h)continue;
