@@ -1,0 +1,100 @@
+# Daftar cadangan: robot otomatis mengambil SEMUA emiten dari situs BEI / Yahoo.
+# Kode di file ini selalu ikut dipantau (berguna kalau ada saham yang terlewat).
+
+# Perbankan
+BBCA
+BBRI
+BMRI
+BBNI
+BRIS
+BBTN
+ARTO
+BBYB
+
+# Telekomunikasi & teknologi
+TLKM
+ISAT
+EXCL
+TOWR
+MTEL
+GOTO
+BUKA
+EMTK
+
+# Konsumer
+ICBP
+INDF
+UNVR
+MYOR
+CPIN
+JPFA
+HMSP
+GGRM
+AMRT
+SIDO
+AVIA
+
+# Kesehatan
+KLBF
+MIKA
+HEAL
+
+# Otomotif & industri
+ASII
+UNTR
+AUTO
+SMSM
+
+# Energi & batubara
+ADRO
+AADI
+PTBA
+ITMG
+HRUM
+INDY
+BUMI
+DOID
+ADMR
+MEDC
+ENRG
+ELSA
+PGAS
+AKRA
+ESSA
+PGEO
+BREN
+CUAN
+
+# Logam & tambang
+ANTM
+INCO
+MDKA
+TINS
+NCKL
+MBMA
+AMMN
+
+# Kimia, kertas, semen
+BRPT
+TPIA
+INKP
+TKIM
+SMGR
+INTP
+
+# Properti & konstruksi
+CTRA
+BSDE
+PWON
+SMRA
+JSMR
+PTPP
+WIKA
+ADHI
+
+# Ritel & media
+MAPI
+MAPA
+ACES
+ERAA
+SCMA

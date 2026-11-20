@@ -1,0 +1,70 @@
+name: Update data & deploy website
+
+on:
+  schedule:
+    # 12:30 UTC = 19:30 WIB, Senin–Jumat (setelah bursa tutup & broker summary dirilis)
+    - cron: "30 12 * * 1-5"
+  workflow_dispatch: {}   # tombol "Run workflow" untuk update manual
+  push:
+    branches: [main]
+    paths-ignore: ["data/**"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update-and-deploy
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install library
+        run: pip install requests yfinance
+
+      - name: Ambil data semua saham IDX
+        env:
+          INDEXALPHA_TOKEN: ${{ secrets.INDEXALPHA_TOKEN }}
+        run: python scripts/update.py
+
+      - name: Simpan data ke repository
+        run: |
+          git config user.name "price-bot"
+          git config user.email "price-bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan data."
+          else
+            git commit -m "Update data $(TZ=Asia/Jakarta date +'%Y-%m-%d')"
+            git push
+          fi
+
+      - name: Siapkan file website
+        run: |
+          mkdir -p _site/data
+          cp index.html _site/
+          cp data/*.json _site/data/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

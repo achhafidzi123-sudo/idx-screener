@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screener Saham IDX</title>
+<style>
+:root{--bg:#0f1419;--card:#1a2129;--card2:#222b35;--tx:#e8edf2;--mut:#8b98a5;--ac:#22c55e;--rd:#ef4444;--bl:#3b82f6;--yl:#eab308;--bd:#2c3640}
+@media (prefers-color-scheme: light){:root{--bg:#f4f6f8;--card:#fff;--card2:#eef1f4;--tx:#111827;--mut:#5b6673;--bd:#dde2e7}}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 14px 0;border-bottom:1px solid var(--bd)}
+h1{font-size:19px;margin:0 0 10px}
+.tabs{display:flex;gap:4px}
+.tab{flex:1;background:none;border:none;border-bottom:3px solid transparent;border-radius:0;padding:9px 4px;font-size:14px;font-weight:600;color:var(--mut);cursor:pointer}
+.tab.on{color:var(--tx);border-color:var(--ac)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 11px}
+input[type=search]{flex:1;min-width:120px}
+button{cursor:pointer;background:var(--card2)}
+button.pri{background:var(--ac);border-color:var(--ac);color:#04210f;font-weight:600}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.chip{white-space:nowrap;border-radius:999px;padding:6px 12px;font-size:13px}
+.chip.on{background:var(--bl);border-color:var(--bl);color:#fff}
+main{padding:12px 14px 80px;max-width:900px;margin:0 auto}
+.pane{display:none}.pane.on{display:block}
+.banner{background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.4);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.banner b{color:var(--yl)}
+.banner.auto{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4)}
+.banner.auto b{color:var(--ac)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.box h3{margin:0 0 10px;font-size:14px}
+details{background:var(--card);border:1px solid var(--bd);border-radius:12px;margin-bottom:12px}
+summary{padding:12px 14px;cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"▾";color:var(--mut)}
+details[open] summary::after{content:"▴"}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+details .fgrid{padding:0 14px 14px}
+.f label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+.f .mm{display:flex;gap:6px}
+.f input,.f select{width:100%;padding:8px}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:10px}
+.chk input{width:auto}
+.meta{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;font-size:13px;color:var(--mut);gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.tk{font-weight:700;font-size:17px}
+.nm{font-size:12px;color:var(--mut)}
+.px{text-align:right;font-weight:600}
+.sc{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.st{background:var(--card2);border-radius:8px;padding:6px 8px}
+.st small{display:block;font-size:11px;color:var(--mut)}
+.st b{font-size:14px}
+.g{color:var(--ac)}.r{color:var(--rd)}
+.fv{margin-top:8px;font-size:12px;color:var(--mut)}
+.bars{display:flex;align-items:flex-end;gap:2px;height:44px;margin-top:10px}
+.bars i{flex:1;background:var(--ac);border-radius:2px 2px 0 0;min-height:2px}
+.bars i.off{background:var(--bd)}
+.bars i.neg{background:var(--rd);opacity:.6}
+svg.spark{width:100%;height:60px;display:block;margin-top:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.modal.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:640px;border-radius:16px 16px 0 0;padding:16px;max-height:90vh;overflow:auto}
+.sheet h2{margin:0 0 8px;font-size:17px}
+.sheet p{font-size:13px;color:var(--mut);margin:6px 0}
+textarea{width:100%;min-height:150px;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+code{background:var(--card2);padding:1px 5px;border-radius:5px;font-size:12px}
+.msg{font-size:13px;margin-top:8px}
+.empty{text-align:center;color:var(--mut);padding:30px 0}
+.seg{display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:12px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:9px;padding:9px 6px;font-weight:600;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.bchip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:13px;background:var(--bl);color:#fff;border:none}
+.bchip.sug{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
+.bchip small{opacity:.8;font-size:11px}
+.bsum{background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+.bsum b{font-size:15px}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 Screener Saham IDX</h1>
+  <div class="tabs">
+    <button class="tab on" data-t="akum">🏦 Akumulasi</button>
+    <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
+    <button class="tab" data-t="fund">📊 Fundamental</button>
+  </div>
+</header>
+
+<main>
+<!-- ================= AKUMULASI BROKER ================= -->
+<section class="pane on" id="p-akum">
+  <div class="banner" id="b-akum"><b>Data demo.</b> Kode saham & broker di sini fiktif, hanya untuk mencoba. Impor <b>broker summary harian</b> Anda (dari aplikasi sekuritas) untuk hasil nyata.</div>
+  <div class="seg" id="a-seg"><button data-am="all" class="on">👥 Semua broker</button><button data-am="pick">🎯 Broker tertentu</button></div>
+  <div class="box" id="a-pickbox" style="display:none">
+    <h3>Pilih broker yang dipantau</h3>
+    <div class="row"><input id="a-bk" list="a-bklist" placeholder="Ketik kode / nama, mis. AK" style="flex:1;min-width:0" autocapitalize="characters"><button class="pri" id="a-bkadd">Tambah</button></div>
+    <datalist id="a-bklist"></datalist>
+    <div class="row" id="a-bkchips" style="margin-top:10px"></div>
+    <div class="nm" style="margin:12px 0 6px">Saran: broker yang paling banyak sedang akumulasi</div>
+    <div class="row" id="a-bksug"></div>
+  </div>
+  <div class="box" id="a-topbox">
+    <h3>Broker paling banyak akumulasi <span class="nm">(ketuk untuk pantau)</span></h3>
+    <div class="row" id="a-top"></div>
+  </div>
+  <div class="box">
+    <h3>Kriteria akumulasi</h3>
+    <div class="fgrid">
+      <div class="f"><label>Minimal hari beruntun</label><input id="a-days" inputmode="numeric" value="3"></div>
+      <div class="f"><label>Minimal beli / hari (Rp miliar)</label><input id="a-min" inputmode="decimal" value="1"></div>
+      <div class="f"><label>Hitung berdasarkan</label><select id="a-mode"><option value="net">Net buy (beli − jual)</option><option value="buy">Gross buy (total beli)</option></select></div>
+      <div class="f"><label>Cari saham</label><input id="a-q" type="search" placeholder="mis. BBCA"></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="a-hist"> Tampilkan juga akumulasi yang sudah berhenti</label>
+  </div>
+  <div class="meta"><span id="a-res"></span><button class="pri" data-imp="broker">Impor Broker Summary</button></div>
+  <div id="a-bsum"></div>
+  <div id="a-list"></div>
+</section>
+
+<!-- ================= RSI ================= -->
+<section class="pane" id="p-rsi">
+  <div class="banner" id="b-rsi"><b>Data demo.</b> Harga di sini fiktif. Impor <b>harga penutupan harian</b> (minimal ±30 hari per saham) untuk menghitung RSI nyata.</div>
+  <div class="box">
+    <h3>Kriteria RSI</h3>
+    <div class="fgrid">
+      <div class="f"><label>Batas RSI (≤)</label><input id="r-th" inputmode="decimal" value="20"></div>
+      <div class="f"><label>Periode RSI</label><input id="r-per" inputmode="numeric" value="14"></div>
+      <div class="f"><label>Menyentuh dalam … hari terakhir</label><select id="r-look"><option value="1">Hari terakhir saja</option><option value="3">3 hari</option><option value="5">5 hari</option><option value="10">10 hari</option></select></div>
+      <div class="f"><label>Min. nilai transaksi/hari (Rp miliar)</label><input id="r-val" inputmode="decimal" value="1"></div>
+      <div class="f"><label>Cari saham</label><input id="r-q" type="search" placeholder="Kode…"></div>
+    </div>
+  </div>
+  <div class="meta"><span id="r-res"></span><button class="pri" data-imp="price">Impor Harga</button></div>
+  <div id="r-list"></div>
+</section>
+
+<!-- ================= FUNDAMENTAL ================= -->
+<section class="pane" id="p-fund">
+  <div class="banner" id="b-fund"><b>Data contoh.</b> Angka hanya ilustrasi, <u>bukan</u> data pasar terkini. Impor data fundamental terbaru Anda.</div>
+  <div class="row" style="margin-bottom:6px">
+    <input type="search" id="q" placeholder="Cari kode / nama…">
+    <select id="sektor"><option value="">Semua sektor</option></select>
+  </div>
+  <div class="chips" id="presets"></div>
+  <details>
+    <summary>Filter fundamental</summary>
+    <div class="fgrid" id="fgrid"></div>
+    <div class="row" style="padding:0 14px 14px"><button id="reset">Reset filter</button></div>
+  </details>
+  <div class="meta">
+    <span id="res"></span>
+    <div class="row">
+      <select id="sort">
+        <option value="score">Urut: Skor</option><option value="per">PER terendah</option><option value="pbv">PBV terendah</option>
+        <option value="roe">ROE tertinggi</option><option value="dy">Dividen tertinggi</option><option value="mcap">Market cap terbesar</option><option value="mos">Margin of safety</option>
+      </select>
+      <button class="pri" data-imp="fund">Impor</button>
+    </div>
+  </div>
+  <div id="list"></div>
+</section>
+<p class="nm" style="text-align:center;margin-top:20px">Alat bantu penyaringan, bukan rekomendasi beli/jual. Selalu lakukan riset sendiri.</p>
+</main>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2 id="m-title"></h2>
+    <div id="m-help"></div>
+    <input type="file" id="file" accept=".csv,.txt" style="width:100%;margin:8px 0">
+    <p>…atau tempel langsung dari spreadsheet:</p>
+    <textarea id="paste"></textarea>
+    <div class="msg" id="msg"></div>
+    <div class="row" style="margin-top:10px;justify-content:space-between">
+      <button id="demo">Kembali ke data demo</button>
+      <div class="row"><button id="cancel">Tutup</button><button class="pri" id="load">Muat data</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================= UTIL ======================= */
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const fmt=(v,dp=1)=>isFinite(v)?v.toLocaleString('id-ID',{maximumFractionDigits:dp}):'–';
+function num(s){if(s==null)return NaN;s=String(s).trim().replace(/[%\sRp]/gi,'');if(s==='')return NaN;
+  if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s))s=s.replace(/\./g,'').replace(',','.');
+  else if(/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s))s=s.replace(/,/g,'');
+  else s=s.replace(',','.');return parseFloat(s);}
+function parseDate(s){s=String(s||'').trim();let m;
+  if(m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  if(m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/))return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return null;}
+const tgl=d=>{const[y,m,dd]=d.split('-');return `${+dd} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][m-1]}`};
+function rupiah(v){const a=Math.abs(v);if(a>=1e12)return fmt(v/1e12,2)+' T';if(a>=1e9)return fmt(v/1e9,2)+' M';if(a>=1e6)return fmt(v/1e6,1)+' jt';return fmt(v,0);}
+function splitCSV(txt){const lines=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  if(lines.length<2)throw 'Minimal butuh header dan 1 baris data.';
+  const h0=lines[0];const d=h0.includes('\t')?'\t':(h0.split(';').length>h0.split(',').length?';':',');
+  const h=h0.split(d).map(x=>x.trim().toLowerCase().replace(/["']/g,''));
+  return{h,rows:lines.slice(1).map(l=>l.split(d).map(x=>x.trim().replace(/^"|"$/g,'')))};}
+function col(h,names){return h.findIndex(x=>names.some(a=>x===a||x.startsWith(a)));}
+function store(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function rng(seed){return()=>{seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296}}
+
+/* ======================= DEMO GENERATOR ======================= */
+function tradingDays(n){const out=[];let d=new Date(Date.UTC(2026,10,19));while(out.length<n){const w=d.getUTCDay();if(w&&w<6)out.unshift(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()-1);}return out;}
+const DEMO_STOCKS=['AAAA','BBBB','CCCC','DDDD','EEEE','FFFF','GGGG','HHHH'];
+function demoBroker(){const R=rng(7),days=tradingDays(20),brk=['ZA','ZB','ZC','ZD','ZE','ZF','ZG','ZH','ZJ','ZK'];
+  // planted accumulators: [stock, broker, streak length ending at last day or offset]
+  const plant={'AAAA|ZA':8,'BBBB|ZC':5,'CCCC|ZB':3,'DDDD|ZE':12,'EEEE|ZD':2,'GGGG|ZF':6};
+  const ended={'FFFF|ZH':[4,10]}; // streak 4 hari yang berhenti 10 hari lalu
+  let s='Tanggal,Kode,Broker,Buy,Sell\n';
+  DEMO_STOCKS.forEach(k=>days.forEach((d,i)=>brk.forEach(b=>{
+    const key=k+'|'+b,fromEnd=days.length-1-i;
+    let buy=R()*1.6e9,sell=R()*1.6e9;
+    if(plant[key]&&fromEnd<plant[key]){buy=1.5e9+R()*3e9;sell=R()*4e8;}
+    if(ended[key]){const[L,off]=ended[key];if(fromEnd>=off&&fromEnd<off+L){buy=2e9+R()*2e9;sell=R()*3e8;}}
+    s+=`${d},${k},${b},${Math.round(buy)},${Math.round(sell)}\n`;})));
+  return s;}
+function demoPrice(){const R=rng(11),days=tradingDays(70);let s='Tanggal,Kode,Close\n';
+  const crash={BBBB:[8,0.035],EEEE:[6,0.045],HHHH:[10,0.025],CCCC:[5,0.02]};
+  DEMO_STOCKS.forEach((k,j)=>{let p=500+j*700;days.forEach((d,i)=>{const fromEnd=days.length-1-i;
+    let ch=(R()-0.48)*0.03;
+    if(crash[k]&&fromEnd<crash[k][0]+(k==='CCCC'?4:0)&&fromEnd>=(k==='CCCC'?4:0))ch=-crash[k][1]*(0.6+R()*0.8);
+    if(k==='CCCC'&&fromEnd<4)ch=0.03;
+    p=Math.max(50,p*(1+ch));s+=`${d},${k},${Math.round(p)}\n`;});});
+  return s;}
+
+/* ======================= AKUMULASI ======================= */
+// Daftar Anggota Bursa resmi BEI (idx.co.id, 89 anggota, Okt 2026)
+const BROKER_NAMES={"AD":"Sukadana Prima Sekuritas","AF":"Harita Kencana Sekuritas","AG":"Kiwoom Sekuritas Indonesia","AH":"Shinhan Sekuritas Indonesia","AI":"Kay Hian Sekuritas","AK":"UBS Sekuritas Indonesia","AO":"Erdikha Elit Sekuritas","AP":"Pacific Sekuritas Indonesia","AR":"Binaartha Sekuritas","AT":"Phintraco Sekuritas","AZ":"Sucor Sekuritas","BB":"Verdhana Sekuritas Indonesia","BF":"Inti Fikasa Sekuritas","BK":"J.P. Morgan Sekuritas Indonesia","BQ":"Korea Investment And Sekuritas Indonesia","BR":"Trust Sekuritas","BS":"Equity Sekuritas Indonesia","CC":"Mandiri Sekuritas","CD":"Mega Capital Sekuritas","CP":"KB Valbury Sekuritas","DD":"Makindo Sekuritas","DH":"Sinarmas Sekuritas","DP":"DBS Vickers Sekuritas Indonesia","DR":"RHB Sekuritas Indonesia","DU":"KAF Sekuritas Indonesia","DX":"Bahana Sekuritas","EL":"Evergreen Sekuritas Indonesia","EP":"MNC Sekuritas","ES":"Ekokapital Sekuritas","FO":"Forte Global Sekuritas","FS":"Yuanta Sekuritas Indonesia","FZ":"Waterfront Sekuritas Indonesia","GA":"BNC Sekuritas Indonesia","GI":"Webull Sekuritas Indonesia","GR":"Panin Sekuritas","HD":"KGI Sekuritas Indonesia","HP":"Henan Putihrai Sekuritas","IC":"Integrity Capital Sekuritas","ID":"Anugerah Sekuritas Indonesia","IF":"Samuel Sekuritas Indonesia","IH":"Indo Harvest Sekuritas","II":"Danatama Makmur Sekuritas","IN":"Investindo Nusantara Sekuritas","IT":"Inti Teladan Sekuritas","IU":"Indo Capital Sekuritas","KI":"Ciptadana Sekuritas Asia","KK":"Phillip Sekuritas Indonesia","KZ":"CLSA Sekuritas Indonesia","LG":"Trimegah Sekuritas Indonesia","LS":"Reliance Sekuritas Indonesia","MG":"Semesta Indovest Sekuritas","MI":"Victoria Sekuritas Indonesia","MU":"Minna Padi Investama Sekuritas","NI":"BNI Sekuritas","OD":"BRI Danareksa Sekuritas","OK":"Net Sekuritas","PC":"FAC Sekuritas Indonesia","PD":"Indo Premier Sekuritas","PF":"Danasakti Sekuritas Indonesia","PG":"Panca Global Sekuritas","PI":"Magenta Kapital Sekuritas Indonesia","PO":"Pilarmas Investindo Sekuritas","PP":"Aldiracita Sekuritas Indonesia","PS":"Paramitra Alfa Sekuritas","QA":"Tuntun Sekuritas Indonesia","RB":"INA Sekuritas Indonesia","RF":"Buana Capital Sekuritas","RG":"Profindo Sekuritas Indonesia","RO":"Pluang Maju Sekuritas","RS":"Yulie Sekuritas Indonesia","RX":"Macquarie Sekuritas Indonesia","SA":"Elit Sukses Sekuritas","SF":"Surya Fajar Sekuritas","SH":"Artha Sekuritas Indonesia","SQ":"BCA Sekuritas","SS":"Supra Sekuritas Indonesia","TF":"Laba Sekuritas Indonesia","TP":"OCBC Sekuritas Indonesia","TS":"Dwidana Sakti Sekuritas","XA":"NH Korindo Sekuritas Indonesia","XC":"Ajaib Sekuritas Asia","XL":"Stockbit Sekuritas Digital","YB":"Yakin Bertumbuh Sekuritas","YJ":"Lotus Andalan Sekuritas","YO":"Amantara Sekuritas Indonesia","YP":"Mirae Asset Sekuritas Indonesia","YU":"CGS International Sekuritas Indonesia","ZP":"Maybank Sekuritas Indonesia","ZR":"Bumiputera Sekuritas"};
+const bname=c=>BROKER_NAMES[c]||'';
+let AK_MODE='all',AK_PICK=[];try{AK_MODE=localStorage.getItem('idx_akmode')||'all';AK_PICK=JSON.parse(localStorage.getItem('idx_akbrk')||'[]')}catch(e){}
+let BRK=null,brkDemo=true,BRK_DAYS=null;
+function parseBroker(txt){const{h,rows}=splitCSV(txt);
+  const c={d:col(h,['tanggal','date','tgl']),k:col(h,['kode','ticker','saham','emiten','stock']),b:col(h,['broker','brk']),
+    buy:col(h,['buy','beli','bval']),sell:col(h,['sell','jual','sval']),net:col(h,['net'])};
+  if(c.d<0||c.k<0||c.b<0)throw 'Header wajib: Tanggal, Kode, Broker (+ Buy & Sell, atau Net).';
+  if(c.buy<0&&c.net<0)throw 'Butuh kolom Buy (dan Sell) atau Net.';
+  const unit=+$('m-unit').value||1;
+  const out=[];rows.forEach(r=>{const d=parseDate(r[c.d]);if(!d)return;
+    const buy=c.buy>=0?num(r[c.buy])*unit:NaN,sell=c.sell>=0?num(r[c.sell])*unit:NaN;
+    let net=c.net>=0?num(r[c.net])*unit:(buy-(isFinite(sell)?sell:0));
+    out.push({d,k:(r[c.k]||'').toUpperCase(),b:(r[c.b]||'').toUpperCase(),buy:isFinite(buy)?buy:(net>0?net:0),net:isFinite(net)?net:0});});
+  if(!out.length)throw 'Tidak ada baris valid (cek format tanggal).';return out;}
+
+function analyzeAkum(){
+  const minD=Math.max(1,parseInt($('a-days').value)||1),minV=(num($('a-min').value)||0)*1e9,mode=$('a-mode').value,hist=$('a-hist').checked;
+  const byStock={};BRK.forEach(r=>{(byStock[r.k]=byStock[r.k]||{dates:new Set(),br:{}});const S=byStock[r.k];S.dates.add(r.d);
+    const m=(S.br[r.b]=S.br[r.b]||{});m[r.d]=(m[r.d]||{buy:0,net:0});m[r.d].buy+=r.buy;m[r.d].net+=r.net;});
+  const res=[];
+  for(const k in byStock){const dates=BRK_DAYS||[...byStock[k].dates].sort(),last=dates.length-1;
+    for(const b in byStock[k].br){const m=byStock[k].br[b];const v=d=>m[d]?(mode==='net'?m[d].net:m[d].buy):0;
+      // cari semua streak
+      let best=null,cur=0;
+      for(let i=0;i<=last;i++){if(v(dates[i])>=minV){cur++;if(i===last||v(dates[i+1])<minV){
+        const st={len:cur,end:i,start:i-cur+1,active:i===last};if(!best||st.active||st.len>best.len&&!best.active)best=st;}}else cur=0;}
+      if(!best||best.len<minD)continue;if(!hist&&!best.active)continue;
+      const ds=dates.slice(best.start,best.end+1);const tot=ds.reduce((a,d)=>a+v(d),0);
+      const tail=dates.slice(-20).map(d=>({d,v:v(d),in:d>=dates[best.start]&&d<=dates[best.end]}));
+      res.push({k,b,len:best.len,active:best.active,from:dates[best.start],to:dates[best.end],tot,avg:tot/best.len,tail,lastDate:dates[last]});}}
+  res.sort((a,b)=>(b.active-a.active)||(b.len-a.len)||(b.tot-a.tot));return res;}
+
+function card(r,lbl){const mx=Math.max(...r.tail.map(t=>Math.abs(t.v)),1);
+  return `<div class="card"><div class="top"><div><div class="tk">${esc(r.k)} <span class="nm">← broker</span> ${esc(r.b)}</div>
+      <div class="nm">${bname(r.b)?esc(bname(r.b))+' · ':''}${tgl(r.from)} – ${tgl(r.to)}</div></div>
+      <div class="px"><span class="pill" style="background:${r.active?'var(--ac)':'var(--card2)'};color:${r.active?'#04210f':'var(--mut)'}">${r.active?'● AKTIF':'Berhenti'}</span></div></div>
+      <div class="stats"><div class="st"><small>Hari beruntun</small><b class="g">${r.len} hari</b></div>
+      <div class="st"><small>Total ${lbl}</small><b>Rp ${rupiah(r.tot)}</b></div>
+      <div class="st"><small>Rata-rata/hari</small><b>Rp ${rupiah(r.avg)}</b></div></div>
+      <div class="bars">${r.tail.map(t=>`<i class="${t.v<0?'neg':t.in?'':'off'}" style="height:${Math.max(3,Math.abs(t.v)/mx*100)}%" title="${t.d}: Rp ${rupiah(t.v)}"></i>`).join('')}</div>
+      <div class="fv">Grafik: ${lbl} harian ${esc(r.b)} di ${esc(r.k)}, 20 hari bursa terakhir (hijau = masuk streak, merah = net jual)</div></div>`;}
+function saveAk(){try{localStorage.setItem('idx_akmode',AK_MODE);localStorage.setItem('idx_akbrk',JSON.stringify(AK_PICK))}catch(e){}}
+function setMode(m){AK_MODE=m;saveAk();renderAkum();}
+function addBroker(raw){raw=String(raw||'').trim();if(!raw)return false;
+  const known=new Set([...Object.keys(BROKER_NAMES),...(BRK||[]).map(r=>r.b)]);let c=raw.toUpperCase().split(/[\s·—-]/)[0];
+  if(!known.has(c)){const hit=Object.keys(BROKER_NAMES).find(k=>BROKER_NAMES[k].toUpperCase().includes(raw.toUpperCase()));if(!hit)return false;c=hit;}
+  if(!AK_PICK.includes(c))AK_PICK.push(c);AK_MODE='pick';saveAk();$('a-bk').value='';renderAkum();return true;}
+function removeBroker(c){AK_PICK=AK_PICK.filter(x=>x!==c);saveAk();renderAkum();}
+function brokerChip(c,cls,extra){return `<button class="bchip ${cls}" data-bk="${esc(c)}">${esc(c)}${bname(c)?` <small>${esc(bname(c))}</small>`:''}${extra||''}</button>`;}
+function renderAkum(){if(!BRK)return;const all=analyzeAkum(),lbl=$('a-mode').value==='net'?'net buy':'beli',q=$('a-q').value.trim().toUpperCase();
+  const pick=AK_MODE==='pick';
+  document.querySelectorAll('#a-seg button').forEach(b=>b.classList.toggle('on',b.dataset.am===AK_MODE));
+  $('a-pickbox').style.display=pick?'':'none';$('a-topbox').style.display=pick?'none':'';
+  // peringkat broker berdasarkan jumlah saham yang sedang diakumulasi (aktif)
+  const cnt={};all.filter(r=>r.active).forEach(r=>{(cnt[r.b]=cnt[r.b]||{n:0,v:0});cnt[r.b].n++;cnt[r.b].v+=r.tot;});
+  const top=Object.entries(cnt).sort((a,b)=>b[1].n-a[1].n||b[1].v-a[1].v).slice(0,10);
+  $('a-top').innerHTML=top.length?top.map(([c,o])=>brokerChip(c,'sug',` <small>· ${o.n} saham</small>`)).join(''):'<span class="nm">Belum ada akumulasi aktif dengan kriteria ini.</span>';
+  $('a-bksug').innerHTML=top.filter(([c])=>!AK_PICK.includes(c)).slice(0,6).map(([c,o])=>brokerChip(c,'sug',` <small>+ · ${o.n}</small>`)).join('')||'<span class="nm">–</span>';
+  $('a-bkchips').innerHTML=AK_PICK.length?AK_PICK.map(c=>brokerChip(c,'',' ✕')).join(''):'<span class="nm">Belum ada broker dipilih.</span>';
+  const codes=[...new Set([...Object.keys(BROKER_NAMES),...BRK.map(r=>r.b)])].sort();
+  $('a-bklist').innerHTML=codes.map(c=>`<option value="${esc(c)}">${esc(bname(c))}</option>`).join('');
+  let res=all.filter(r=>!q||r.k.includes(q));
+  if(pick)res=res.filter(r=>AK_PICK.includes(r.b));
+  const nS=new Set(BRK.map(r=>r.k)).size,dts=BRK_DAYS||[...new Set(BRK.map(r=>r.d))].sort();
+  $('a-res').textContent=`${res.length} temuan · ${nS} saham · ${tgl(dts[0])}–${tgl(dts.at(-1))}`;
+  // ringkasan per broker terpilih
+  $('a-bsum').innerHTML=pick?AK_PICK.map(c=>{const rs=res.filter(r=>r.b===c),act=rs.filter(r=>r.active);const tot=act.reduce((a,r)=>a+r.tot,0);
+    return `<div class="bsum"><b>${esc(c)}</b> ${bname(c)?`<span class="nm">${esc(bname(c))}</span>`:''}<br>${act.length?`Sedang akumulasi di <b class="g">${act.length} saham</b>: ${act.map(r=>`${esc(r.k)} (${r.len}h)`).join(', ')} · total ${lbl} Rp ${rupiah(tot)}`:'<span class="nm">Tidak sedang akumulasi saham apa pun dengan kriteria ini.</span>'}</div>`}).join(''):'';
+  $('a-list').innerHTML=pick&&!AK_PICK.length?'<div class="empty">Pilih minimal satu broker di atas.</div>'
+    :res.length?res.map(r=>card(r,lbl)).join('')
+    :'<div class="empty">Belum ada akumulasi yang memenuhi kriteria.<br>Coba turunkan minimal hari atau nilai beli.</div>';}
+$('a-seg').onclick=e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.am);};
+$('a-bkadd').onclick=()=>{if(!addBroker($('a-bk').value))$('a-bk').style.borderColor='var(--rd)';};
+$('a-bk').addEventListener('keydown',e=>{$('a-bk').style.borderColor='';if(e.key==='Enter')$('a-bkadd').click();});
+$('a-bk').addEventListener('input',e=>{if(e.inputType==='insertReplacementText'||!e.inputType)addBroker($('a-bk').value);});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bk]');if(!b)return;const c=b.dataset.bk;
+  if(b.closest('#a-bkchips'))removeBroker(c);else addBroker(c);});
+['a-days','a-min','a-mode','a-q','a-hist'].forEach(id=>$(id).addEventListener('input',renderAkum));
+
+/* ======================= RSI ======================= */
+let PRC=null,prcDemo=true,VAL=null;
+function parsePrice(txt){const{h,rows}=splitCSV(txt);
+  const c={d:col(h,['tanggal','date','tgl']),k:col(h,['kode','ticker','saham','emiten','stock']),cl:col(h,['close','penutupan','harga','last'])};
+  if(c.d<0||c.k<0||c.cl<0)throw 'Header wajib: Tanggal, Kode, Close.';
+  const out=[];rows.forEach(r=>{const d=parseDate(r[c.d]),v=num(r[c.cl]);if(d&&isFinite(v))out.push({d,k:(r[c.k]||'').toUpperCase(),c:v});});
+  if(!out.length)throw 'Tidak ada baris valid.';return out;}
+function rsiSeries(cl,n){const out=Array(cl.length).fill(NaN);if(cl.length<=n)return out;
+  let g=0,l=0;for(let i=1;i<=n;i++){const ch=cl[i]-cl[i-1];ch>0?g+=ch:l-=ch;}g/=n;l/=n;
+  out[n]=l===0?100:100-100/(1+g/l);
+  for(let i=n+1;i<cl.length;i++){const ch=cl[i]-cl[i-1];g=(g*(n-1)+Math.max(ch,0))/n;l=(l*(n-1)+Math.max(-ch,0))/n;out[i]=l===0?100:100-100/(1+g/l);}
+  return out;}
+function spark(vals,th){const v=vals.filter(isFinite);if(v.length<2)return'';const W=300,H=60,y=x=>H-x/100*H;
+  const pts=vals.map((x,i)=>isFinite(x)?`${(i/(vals.length-1)*W).toFixed(1)},${y(x).toFixed(1)}`:null).filter(Boolean).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><rect x="0" y="${y(th)}" width="${W}" height="${H-y(th)}" fill="rgba(239,68,68,.12)"/>
+   <line x1="0" x2="${W}" y1="${y(70)}" y2="${y(70)}" stroke="var(--bd)" stroke-dasharray="3 3"/><line x1="0" x2="${W}" y1="${y(th)}" y2="${y(th)}" stroke="var(--rd)" stroke-dasharray="3 3"/>
+   <polyline points="${pts}" fill="none" stroke="var(--bl)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;}
+function renderRSI(){if(!PRC)return;
+  const minVal=(num($('r-val').value)||0)*1e9,th=num($('r-th').value),n=Math.max(2,parseInt($('r-per').value)||14),look=+$('r-look').value,q=$('r-q').value.trim().toUpperCase();
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||{})[r.d]=r.c);
+  const res=[],short=[];
+  let lowVal=0;
+  for(const k in by){if(q&&!k.includes(q))continue;
+    if(VAL&&minVal>0&&k in VAL&&VAL[k]<minVal){lowVal++;continue;}const ds=Object.keys(by[k]).sort(),cl=ds.map(d=>by[k][d]);
+    if(cl.length<=n){short.push(k);continue;}
+    const rs=rsiSeries(cl,n),L=rs.length;let hit=null;
+    for(let i=L-1;i>=Math.max(0,L-look);i--)if(rs[i]<=th&&(!hit||rs[i]<hit.v))hit={v:rs[i],d:ds[i]};
+    if(!hit)continue;
+    res.push({k,val:VAL?VAL[k]:NaN,rsi:rs[L-1],hit,close:cl[L-1],chg:(cl[L-1]/cl[Math.max(0,L-6)]-1)*100,date:ds[L-1],tail:rs.slice(-40)});}
+  res.sort((a,b)=>a.hit.v-b.hit.v);
+  $('r-res').textContent=`${res.length} saham RSI(${n}) ≤ ${fmt(th)}`+(short.length?` · ${short.length} saham datanya kurang`:'')+(VAL?` · dari ${Object.keys(by).length} saham`:'');
+  $('r-list').innerHTML=res.length?res.map(r=>`<div class="card"><div class="top"><div><div class="tk">${esc(r.k)}</div><div class="nm">Data terakhir ${tgl(r.date)}</div></div>
+    <div class="px">Rp ${fmt(r.close,0)}<br><span class="nm ${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}% (5 hari)</span></div></div>
+    <div class="stats"><div class="st"><small>RSI sekarang</small><b class="${r.rsi<=th?'r':''}">${fmt(r.rsi,2)}</b></div>
+    <div class="st"><small>RSI terendah</small><b class="r">${fmt(r.hit.v,2)}</b></div>
+    <div class="st"><small>Tanggal sentuh</small><b>${tgl(r.hit.d)}</b></div></div>
+    ${spark(r.tail,th)}${isFinite(r.val)?`<div class="fv">Nilai transaksi rata-rata 5 hari: <b>Rp ${rupiah(r.val)}</b></div>`:''}<div class="fv">RSI 40 hari terakhir · area merah = zona ≤ ${fmt(th)}, garis putus atas = 70</div></div>`).join('')
+    :`<div class="empty">Tidak ada saham dengan RSI ≤ ${fmt(th)} dalam periode ini.</div>`;}
+['r-th','r-per','r-look','r-q','r-val'].forEach(id=>$(id).addEventListener('input',renderRSI));
+
+/* ======================= FUNDAMENTAL ======================= */
+const DEMO_FUND=`Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap
+BBCA,Bank Central Asia,Keuangan,9500,21,4.4,21,2.9,0,1170
+BBRI,Bank Rakyat Indonesia,Keuangan,4200,10,2.0,19,7.5,0,640
+BMRI,Bank Mandiri,Keuangan,5600,9,1.8,20,7.0,0,520
+BBNI,Bank Negara Indonesia,Keuangan,4500,7.5,1.0,14,8.0,0,168
+TLKM,Telkom Indonesia,Infrastruktur,3000,12,2.0,16,7.2,0.7,297
+ASII,Astra International,Perindustrian,5000,6.5,1.0,15,9.0,0.5,202
+UNVR,Unilever Indonesia,Barang Konsumen Primer,1800,18,25,130,6.0,2.5,69
+ICBP,Indofood CBP,Barang Konsumen Primer,11000,13,2.8,21,2.8,0.6,128
+INDF,Indofood Sukses Makmur,Barang Konsumen Primer,7500,6,0.9,15,3.8,0.9,66
+KLBF,Kalbe Farma,Kesehatan,1300,19,2.7,14,3.0,0.1,61
+PTBA,Bukit Asam,Energi,2600,7,1.5,22,13,0.2,30
+UNTR,United Tractors,Perindustrian,26000,5.2,1.1,21,9.5,0.4,97
+ANTM,Aneka Tambang,Barang Baku,1500,14,1.4,10,3.5,0.3,36
+PGAS,Perusahaan Gas Negara,Energi,1600,8,0.9,11,10,0.7,39
+CPIN,Charoen Pokphand,Barang Konsumen Primer,4700,22,2.6,12,2.0,0.4,77
+SIDO,Industri Jamu Sido Muncul,Kesehatan,560,14,4.6,33,7.5,0.1,17
+CTRA,Ciputra Development,Properti,950,8,0.8,10,2.0,0.6,18
+MEDC,Medco Energi,Energi,1100,6,0.9,15,3.0,1.8,28`;
+const FIELDS=[{k:'per',l:'PER (x)'},{k:'pbv',l:'PBV (x)'},{k:'roe',l:'ROE (%)'},{k:'dy',l:'Dividend Yield (%)'},{k:'der',l:'DER (x)'},{k:'mcap',l:'Market Cap (T Rp)'}];
+const PRESETS={'Semua':{},'💎 Value':{per:[0,10],pbv:['',1.5]},'💰 Dividen':{dy:[6,''],der:['',1.5]},'🏆 Quality':{roe:[15,''],der:['',1]},'🏦 Big Cap':{mcap:[100,'']}};
+let FUND=[],filt={},preset='Semua',fundDemo=true;
+function parseFund(txt){const{h,rows}=splitCSV(txt);const m={};
+  [['kode',['kode','ticker','code','emiten']],['nama',['nama','name']],['sektor',['sektor','sector']],['harga',['harga','price','close']],['per',['per','pe']],['pbv',['pbv','pb']],['roe',['roe']],['dy',['dy','div','yield']],['der',['der','de']],['mcap',['mcap','market','kapitalisasi']]].forEach(([k,n])=>m[k]=col(h,n));
+  if(m.kode<0)throw 'Kolom "Kode" tidak ditemukan.';
+  return rows.map(c=>{const g=k=>m[k]>=0?c[m[k]]:'';return enrich({kode:(g('kode')||'').toUpperCase(),nama:g('nama')||'',sektor:g('sektor')||'Lainnya',harga:num(g('harga')),per:num(g('per')),pbv:num(g('pbv')),roe:num(g('roe')),dy:num(g('dy')),der:num(g('der')),mcap:num(g('mcap'))})}).filter(r=>r.kode);}
+function enrich(r){const eps=r.per>0?r.harga/r.per:NaN,bv=r.pbv>0?r.harga/r.pbv:NaN;r.fv=(eps>0&&bv>0)?Math.sqrt(22.5*eps*bv):NaN;r.mos=isFinite(r.fv)?(r.fv-r.harga)/r.fv*100:NaN;
+  let s=0;if(r.per>0)s+=r.per<8?25:r.per<12?18:r.per<18?10:3;if(r.pbv>0)s+=r.pbv<1?20:r.pbv<2?14:r.pbv<4?7:2;
+  if(isFinite(r.roe))s+=r.roe>20?25:r.roe>15?19:r.roe>10?12:r.roe>0?5:0;if(isFinite(r.dy))s+=r.dy>8?15:r.dy>5?11:r.dy>2?6:r.dy>0?2:0;
+  if(isFinite(r.der))s+=r.der<0.5?15:r.der<1?10:r.der<2?5:0;r.score=s;return r;}
+function buildFilters(){$('fgrid').innerHTML=FIELDS.map(x=>`<div class="f"><label>${x.l}</label><div class="mm"><input inputmode="decimal" placeholder="min" data-k="${x.k}" data-b="0"><input inputmode="decimal" placeholder="maks" data-k="${x.k}" data-b="1"></div></div>`).join('');
+  document.querySelectorAll('#fgrid input').forEach(i=>i.addEventListener('input',()=>{const k=i.dataset.k;filt[k]=filt[k]||['',''];filt[k][+i.dataset.b]=i.value;preset='';drawChips();renderFund();}));}
+function applyFilt(){document.querySelectorAll('#fgrid input').forEach(i=>{const v=filt[i.dataset.k];i.value=v?v[+i.dataset.b]:''})}
+function drawChips(){$('presets').innerHTML=Object.keys(PRESETS).map(p=>`<button class="chip ${p===preset?'on':''}" data-p="${p}">${p}</button>`).join('');
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{preset=b.dataset.p;filt=JSON.parse(JSON.stringify(PRESETS[preset]));applyFilt();drawChips();renderFund();});}
+function renderFund(){
+  const sel=$('sektor'),cur=sel.value;sel.innerHTML='<option value="">Semua sektor</option>'+[...new Set(FUND.map(r=>r.sektor))].sort().map(s=>`<option>${esc(s)}</option>`).join('');sel.value=cur;
+  const q=$('q').value.trim().toLowerCase(),sk=sel.value;
+  let rows=FUND.filter(r=>{if(q&&!(r.kode.toLowerCase().includes(q)||r.nama.toLowerCase().includes(q)))return false;if(sk&&r.sektor!==sk)return false;
+    for(const k in filt){const a=num(filt[k][0]),b=num(filt[k][1]);if(isFinite(a)&&!(r[k]>=a))return false;if(isFinite(b)&&!(r[k]<=b))return false;}return true;});
+  const s=$('sort').value,asc={per:1,pbv:1};rows.sort((a,b)=>{let x=a[s],y=b[s];if(asc[s]){x=x>0?x:1e9;y=y>0?y:1e9;return x-y}x=isFinite(x)?x:-1e9;y=isFinite(y)?y:-1e9;return y-x});
+  $('res').textContent=`${rows.length} dari ${FUND.length} saham`;
+  $('list').innerHTML=rows.length?rows.map(r=>{const sc=r.score>=70?'var(--ac)':r.score>=45?'var(--yl)':'var(--rd)';
+    return `<div class="card"><div class="top"><div><div class="tk">${esc(r.kode)}</div><div class="nm">${esc(r.nama)} · ${esc(r.sektor)}</div></div>
+    <div class="px">Rp ${fmt(r.harga,0)}<br><span class="sc" style="background:${sc};color:#111">Skor ${r.score}</span></div></div>
+    <div class="stats"><div class="st"><small>PER</small><b>${fmt(r.per)}x</b></div><div class="st"><small>PBV</small><b>${fmt(r.pbv)}x</b></div><div class="st"><small>ROE</small><b>${fmt(r.roe)}%</b></div>
+    <div class="st"><small>Div. Yield</small><b>${fmt(r.dy)}%</b></div><div class="st"><small>DER</small><b>${fmt(r.der)}x</b></div><div class="st"><small>MCap</small><b>${fmt(r.mcap,0)} T</b></div></div>
+    <div class="fv">Nilai wajar Graham: <b>${isFinite(r.fv)?'Rp '+fmt(r.fv,0):'–'}</b> · MoS: <b class="${r.mos>0?'g':'r'}">${isFinite(r.mos)?fmt(r.mos,0)+'%':'–'}</b></div></div>`}).join(''):'<div class="empty">Tidak ada saham yang lolos filter.</div>';}
+['q','sektor','sort'].forEach(id=>$(id).addEventListener('input',renderFund));
+$('reset').onclick=()=>{filt={};preset='Semua';applyFilt();drawChips();renderFund()};
+
+/* ======================= IMPORT MODAL ======================= */
+const HELP={
+ broker:{t:'Impor broker summary harian',h:`<p>Satu baris = satu broker, satu saham, satu hari. Gabungkan beberapa hari dalam satu file.</p>
+   <p><code>Tanggal,Kode,Broker,Buy,Sell</code> — atau <code>Tanggal,Kode,Broker,Net</code></p>
+   <p>Tanggal: <code>2026-11-20</code> atau <code>20/11/2026</code>. Nilai dalam satuan:</p>
+   <select id="m-unit" style="width:100%"><option value="1">Rupiah</option><option value="1000000">Juta Rp</option><option value="1000000000">Miliar Rp</option></select>`,
+   ph:'Tanggal,Kode,Broker,Buy,Sell\n2026-11-20,BBCA,YP,2500000000,300000000',demo:demoBroker,key:'idx_brk'},
+ price:{t:'Impor harga penutupan',h:`<p><code>Tanggal,Kode,Close</code> — minimal 15 hari per saham untuk RSI 14 (disarankan 60+ hari agar akurat).</p>`,
+   ph:'Tanggal,Kode,Close\n2026-11-19,BBCA,9450\n2026-11-20,BBCA,9500',demo:demoPrice,key:'idx_prc'},
+ fund:{t:'Impor data fundamental',h:`<p><code>Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap</code><br>ROE & DY dalam %, MCap dalam triliun Rp.</p>`,
+   ph:'Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap',demo:()=>DEMO_FUND,key:'idx_scr'}};
+let cur='broker';const M=$('modal'),msg=$('msg');
+const BAN={broker:'b-akum',price:'b-rsi',fund:'b-fund'},DEMOHTML={};for(const k in BAN)DEMOHTML[k]=$(BAN[k]).innerHTML;
+function banner(t,mode,html){const b=$(BAN[t]);b.style.display=mode==='manual'?'none':'';b.classList.toggle('auto',mode==='auto');b.innerHTML=mode==='auto'?html:DEMOHTML[t];}
+function setDS(t,txt,demo){banner(t,demo?'demo':'manual');
+  if(t==='broker'){BRK=parseBroker(txt);BRK_DAYS=null;brkDemo=demo;renderAkum();}
+  else if(t==='price'){PRC=parsePrice(txt);VAL=null;prcDemo=demo;renderRSI();}else{FUND=parseFund(txt);fundDemo=demo;renderFund();}}
+document.querySelectorAll('[data-imp]').forEach(b=>b.onclick=()=>{cur=b.dataset.imp;const H=HELP[cur];$('m-title').textContent=H.t;$('m-help').innerHTML=H.h;
+  $('paste').value='';$('paste').placeholder=H.ph;$('file').value='';msg.textContent='';M.classList.add('on');});
+$('cancel').onclick=()=>M.classList.remove('on');M.onclick=e=>{if(e.target===M)M.classList.remove('on')};
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{$('paste').value=rd.result;msg.textContent=`File terbaca (${rd.result.split('\n').length} baris). Ketuk "Muat data".`};rd.readAsText(f);};
+$('load').onclick=()=>{try{const txt=$('paste').value;setDS(cur,txt,false);
+  const u=$('m-unit');store(HELP[cur].key,txt);if(u)store(HELP[cur].key+'_u',u.value);M.classList.remove('on');}catch(e){msg.innerHTML='<span class="r">⚠ '+esc(e)+'</span>'}};
+$('demo').onclick=()=>{store(HELP[cur].key,null);const u=$('m-unit');if(u)u.value='1';setDS(cur,HELP[cur].demo(),true);M.classList.remove('on');};
+
+/* ======================= TABS & INIT ======================= */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);});
+// unit select must exist for parseBroker at init
+$('m-help').innerHTML=HELP.broker.h;
+buildFilters();drawChips();
+for(const t of ['broker','price','fund']){const H=HELP[t],sv=load(H.key);
+  if(t==='broker'){$('m-help').innerHTML=H.h;$('m-unit').value=load(H.key+'_u')||'1';}
+  try{sv?setDS(t,sv,false):setDS(t,H.demo(),true)}catch(e){if(t==='broker')$('m-unit').value='1';setDS(t,H.demo(),true)}}
+const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.click();
+
+/* ======================= DATA OTOMATIS (diperbarui robot GitHub tiap hari bursa) ======================= */
+async function getJSON(u){try{const r=await fetch(u+'?v='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
+async function loadAuto(){
+  const [P,F,B]=await Promise.all([getJSON('data/prices.json'),getJSON('data/fundamentals.json'),getJSON('data/broker.json')]);
+  let lastClose={};
+  if(P&&P.dates&&P.dates.length&&P.close){
+    const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
+      for(let i=a.length-1;i>=0;i--)if(a[i]!=null){lastClose[k]=a[i];break;}}
+    if(rows.length){PRC=rows;VAL=P.value5d||null;prcDemo=false;
+      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();}
+  }
+  if(F&&F.data&&Object.keys(F.data).length&&Object.keys(lastClose).length){
+    const rows=[];for(const k in F.data){const f=F.data[k],h=lastClose[k];if(!h)continue;
+      rows.push(enrich({kode:k,nama:f.n||'',sektor:f.s||'Lainnya',harga:h,
+        per:f.eps?h/f.eps:NaN,pbv:f.bv?h/f.bv:NaN,roe:f.roe??NaN,dy:f.div!=null?f.div/h*100:NaN,der:f.der??NaN,mcap:f.sh?h*f.sh/1e12:NaN}));}
+    if(rows.length){FUND=rows;fundDemo=false;
+      banner('fund','auto',`<b>● Otomatis</b> · ${rows.length} saham · harga s.d. ${tgl(P.dates.at(-1))}<br><span class="nm">Laporan keuangan diperbarui mingguan (${esc(F.date||'')}) · PER/PBV/yield dihitung ulang dengan harga terbaru</span>`);renderFund();}
+  }
+  if(B&&B.days&&Object.keys(B.days).length){
+    const days=Object.keys(B.days).sort(),rows=[];
+    days.forEach(d=>{const day=B.days[d];for(const k in day)day[k].forEach(([b,buy,sell])=>rows.push({d,k,b,buy:+buy,net:buy-sell}));});
+    if(rows.length){BRK=rows;BRK_DAYS=days;brkDemo=false;
+      const st=(B.storeMin||5e8)/1e9;
+      banner('broker','auto',`<b>● Otomatis</b> · ${Object.keys(B.days[days.at(-1)]).length} saham likuid dipantau · ${days.length} hari bursa s.d. <b>${tgl(days.at(-1))}</b><br><span class="nm">Diperbarui ${esc(B.updated||'')} · ${esc(B.source||'')}${B.topN?` · gratis: ${B.topN} pembeli teratas per saham, net beli dihitung konservatif (tidak pernah dilebihkan)`:''}</span>`);renderAkum();}
+  }
+}
+loadAuto();
+</script>
+</body>
+</html>
