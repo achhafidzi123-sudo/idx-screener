@@ -71,6 +71,11 @@ details .fgrid{padding:0 14px 14px}
 .rt .nm{font-size:11px;margin-bottom:6px;white-space:nowrap}
 .rr{margin-top:5px}.rr small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
 .rr b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;white-space:nowrap}
+@media (min-width:900px){main,.brand,.tabs{max-width:1180px}
+#p-rsi.pane.on{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:14px;align-items:start}
+#p-rsi #b-rsi{grid-column:1/-1;grid-row:1}#p-rsi #r-box{grid-column:2;grid-row:2/4;position:sticky;top:10px}
+#p-rsi #r-meta{grid-column:1;grid-row:2;align-self:start}#p-rsi #r-list{grid-column:1;grid-row:3}
+#p-rsi #r-box .fgrid{grid-template-columns:1fr}}
 svg.spark{width:100%;height:60px;display:block;margin-top:8px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .modal.on{display:flex}
@@ -238,7 +243,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
 <!-- ================= RSI ================= -->
 <section class="pane" id="p-rsi">
   <div class="banner" id="b-rsi"><b>Memuat data…</b> Harga diambil otomatis setiap hari bursa. Jika pesan ini tidak hilang, muat ulang halaman.</div>
-  <div class="box">
+  <div class="box" id="r-box">
     <h3>Kriteria RSI</h3>
     <div class="fgrid">
       <div class="f"><label>Batas RSI (≤)</label><input id="r-th" inputmode="decimal" value="20"></div>
@@ -248,7 +253,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
       <div class="f"><label>Cari saham</label><input id="r-q" type="search" placeholder="Kode…"></div>
     </div>
   </div>
-  <div class="meta"><span id="r-res"></span></div>
+  <div class="meta" id="r-meta"><span id="r-res"></span></div>
   <div id="r-list"></div>
 </section>
 
