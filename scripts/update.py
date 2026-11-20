@@ -235,13 +235,29 @@ def get_prices(session, codes):
     log(f"  Berhasil {len(series)}, gagal {len(failed)}")
     if not series:
         return None
+    # Gabungkan dengan data lama: hari yang sudah tersimpan tidak pernah dibuang
+    # (Yahoo kadang melewatkan hari terakhir, misalnya saat diambil lewat tengah malam).
+    old = read_json(DATA / "prices.json", {})
+    od, oc, ov = old.get("dates") or [], old.get("close") or {}, old.get("vol") or {}
+    newest = max((max(s) for s in series.values() if s), default="-")
+    merged = 0
+    for code, closes in oc.items():
+        s = series.setdefault(code, {}) if code in codes else None
+        if s is None:
+            continue
+        vols = ov.get(code) or [0] * len(closes)
+        for i, d in enumerate(od):
+            if d not in s and i < len(closes) and closes[i] is not None:
+                s[d] = (closes[i], int(vols[i] or 0) if i < len(vols) else 0)
+                merged += 1
+    log(f"  Tanggal terbaru dari Yahoo: {newest}; {merged} nilai lama dipertahankan")
     # tanggal: hanya hari yang punya data di cukup banyak saham (hindari tanggal "nyasar")
     count = {}
     for s in series.values():
         for d in s:
             count[d] = count.get(d, 0) + 1
     min_n = max(1, len(series) // 10)
-    dates = sorted(d for d, n in count.items() if n >= min_n)[-PRICE_DAYS:]
+    dates = sorted(d for d, n in count.items() if n >= min_n or d in set(od))[-PRICE_DAYS:]
     close = {c: [s.get(d, (None, 0))[0] for d in dates] for c, s in sorted(series.items())}
     vol = {c: [s.get(d, (None, 0))[1] for d in dates] for c, s in sorted(series.items())}
     # nilai transaksi rata-rata 5 hari terakhir (Rp) = close * volume (Yahoo: volume dalam lembar)
@@ -251,7 +267,7 @@ def get_prices(session, codes):
         value[c] = round(sum(vals) / max(1, len(vals)))
     last_val = {c: round((close[c][-1] or 0) * (vol[c][-1] or 0)) for c in close}
     payload = {"updated": now_wib().strftime("%d %b %Y %H:%M WIB"), "source": "Yahoo Finance",
-               "failed": failed, "dates": dates, "close": close, "value5d": value, "valueLast": last_val}
+               "failed": failed, "dates": dates, "close": close, "vol": vol, "value5d": value, "valueLast": last_val}
     write_json(DATA / "prices.json", payload)
     log(f"  Tersimpan: {len(close)} saham, {len(dates)} hari, terakhir {dates[-1]}")
     return payload
