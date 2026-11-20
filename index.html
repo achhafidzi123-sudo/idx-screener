@@ -71,7 +71,14 @@ details .fgrid{padding:0 14px 14px}
 .rt .nm{font-size:11px;margin-bottom:6px;white-space:nowrap}
 .rr{margin-top:5px}.rr small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
 .rr b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;white-space:nowrap}
-@media (min-width:900px){main,.brand,.tabs{max-width:none!important;width:auto}main{padding-left:20px;padding-right:20px}.brand,.tabs{margin-left:20px!important;margin-right:20px!important}
+@media (min-width:900px){
+header{position:fixed!important;left:0;top:0;bottom:0;width:250px;padding:18px 14px!important;border-bottom:0!important;border-right:1px solid var(--bd);overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.brand,.tabs{max-width:none!important;margin:0!important}
+.brand{margin-bottom:0!important}
+.tabs{flex-direction:column!important;flex:none}
+.tab{flex:none!important;text-align:left;padding:12px 14px!important;font-size:14px!important}
+#side-banner .banner{margin:0;font-size:12px}
+main{max-width:none!important;margin-left:250px!important;padding:16px 20px 80px!important}
 #p-rsi.pane.on{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:14px;align-items:start}
 #p-rsi #b-rsi{grid-column:1/-1;grid-row:1}#p-rsi #r-box{grid-column:2;grid-row:2/4;position:sticky;top:10px}
 #p-rsi #r-meta{grid-column:1;grid-row:2;align-self:start}#p-rsi #r-list{grid-column:1;grid-row:3}
@@ -193,6 +200,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </div>
+  <div id="side-banner"></div>
 </header>
 
 <main>
@@ -640,14 +648,18 @@ $('demo').onclick=()=>{store(HELP[cur].key,null);const u=$('m-unit');if(u)u.valu
 
 /* ======================= TABS & INIT ======================= */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);placeBanner();});
+function placeBanner(){const slot=$('side-banner'),wide=matchMedia('(min-width:900px)').matches;
+  document.querySelectorAll('.banner[data-home]').forEach(b=>{document.getElementById(b.dataset.home).prepend(b);delete b.dataset.home;});
+  if(!wide)return;const p=document.querySelector('.pane.on'),b=p&&p.querySelector(':scope>.banner');if(b){b.dataset.home=p.id;slot.appendChild(b);}}
+addEventListener('resize',placeBanner);
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
 try{['idx_brk','idx_brk_u','idx_prc','idx_scr'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 renderAkum();
 banner('price','demo');banner('fund','demo');
-const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.click();
+const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.click();placeBanner();
 
 /* ======================= DATA OTOMATIS (diperbarui robot GitHub tiap hari bursa) ======================= */
 async function getJSON(u){try{const r=await fetch(u+'?v='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
