@@ -155,13 +155,13 @@ def get_universe(session) -> dict:
 # 2. HARGA
 # --------------------------------------------------------------------------------------
 def fetch_chart(session, code, rng="1y"):
-    for attempt in range(4):
+    for attempt in range(2):
         host = "query1" if attempt % 2 == 0 else "query2"
         try:
             r = session.get(f"https://{host}.finance.yahoo.com/v8/finance/chart/{code}.JK",
                             params={"range": rng, "interval": "1d"}, timeout=20)
             if r.status_code == 429:
-                time.sleep(2 + attempt * 3)
+                time.sleep(3)
                 continue
             if r.status_code != 200:
                 return code, {}
@@ -179,17 +179,58 @@ def fetch_chart(session, code, rng="1y"):
     return code, {}
 
 
-def get_prices(session, codes):
-    log(f"2) Harga {len(codes)} saham…")
+def prices_yfinance(codes):
+    """Cara utama: yfinance mengambil per kelompok 100 saham (cepat, tahan pembatasan Yahoo)."""
+    try:
+        import yfinance as yf
+    except ImportError:
+        return {}
     series = {}
-    with ThreadPoolExecutor(max_workers=6) as ex:
-        futs = [ex.submit(fetch_chart, session, c) for c in codes]
-        for i, f in enumerate(as_completed(futs), 1):
-            code, s = f.result()
+    for k in range(0, len(codes), 100):
+        chunk = codes[k:k + 100]
+        for attempt in range(3):
+            try:
+                df = yf.download([f"{c}.JK" for c in chunk], period="1y", interval="1d", group_by="column",
+                                 auto_adjust=False, threads=True, progress=False)
+                break
+            except Exception as e:  # noqa: BLE001
+                log(f"  yfinance gagal ({e}), ulangi…")
+                df = None
+                time.sleep(10)
+        if df is None or df.empty:
+            continue
+        close, vol = df["Close"], df["Volume"]
+        if not hasattr(close, "columns"):          # hanya 1 saham -> Series
+            close, vol = close.to_frame(f"{chunk[0]}.JK"), vol.to_frame(f"{chunk[0]}.JK")
+        for col in close.columns:
+            code = str(col).replace(".JK", "")
+            s = {}
+            for idx, c in close[col].items():
+                c = clean(c)
+                if c is None:
+                    continue
+                v = clean(vol[col].get(idx)) or 0
+                s[idx.strftime("%Y-%m-%d")] = (round(c, 2), int(v))
             if s:
                 series[code] = s
-            if i % 100 == 0:
-                log(f"  {i}/{len(codes)}")
+        log(f"  {min(k + 100, len(codes))}/{len(codes)} (berhasil {len(series)})")
+    return series
+
+
+def get_prices(session, codes):
+    log(f"2) Harga {len(codes)} saham…")
+    t0 = time.time()
+    series = prices_yfinance(codes)
+    missing = [c for c in codes if c not in series]
+    if missing and len(missing) <= 150:           # cadangan: endpoint chart langsung, hanya untuk sisa sedikit
+        log(f"  Cadangan endpoint chart untuk {len(missing)} saham…")
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            for code, s in ex.map(lambda c: fetch_chart(session, c), missing):
+                if s:
+                    series[code] = s
+    elif missing:
+        log(f"  {len(missing)} saham tanpa data dari yfinance (dilewati agar cepat)")
+    log(f"  Waktu: {int(time.time() - t0)} detik")
     failed = [c for c in codes if c not in series]
     log(f"  Berhasil {len(series)}, gagal {len(failed)}")
     if not series:
