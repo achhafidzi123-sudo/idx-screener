@@ -35,6 +35,7 @@ jobs:
       - name: Ambil data semua saham IDX
         env:
           INDEXALPHA_TOKEN: ${{ secrets.INDEXALPHA_TOKEN }}
+          IPOT_PROXY: ""   # alamat jembatan Cloudflare Worker
         run: python scripts/update.py
 
       - name: Simpan data ke repository
@@ -56,7 +57,7 @@ jobs:
         run: |
           mkdir -p _site/data
           cp index.html _site/
-          cp data/*.json _site/data/
+          cp -r data/. _site/data/
 
       - uses: actions/upload-pages-artifact@v3
         if: ${{ !cancelled() }}

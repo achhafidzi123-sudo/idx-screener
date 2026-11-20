@@ -334,8 +334,12 @@ def get_fundamentals(codes, names):
 #    Setiap baris disimpan sebagai [broker, nilai_beli, nilai_jual, pasti]
 #    pasti = 1 jika nilai_jual diketahui persis, 0 jika itu batas atas (lihat ipot_rows).
 # --------------------------------------------------------------------------------------
-IPOT_URL = "https://www.indopremier.com/module/saham/include/data-brokersummary.php"
+IPOT_DIRECT = "https://www.indopremier.com/module/saham/include/data-brokersummary.php"
+IPOT_PROXY = os.getenv("IPOT_PROXY", "").strip()      # alamat Cloudflare Worker (jembatan), jika ada
+IPOT_URL = IPOT_PROXY or IPOT_DIRECT
 IPOT_ROWS = 10
+BS_KEEP_DAYS = 5          # hari bursa broker summary lengkap (tabel per broker) yang disimpan
+BS_BOARDS = ["RG", "NG"]  # pasar tambahan selain "all": Reguler dan Nego
 
 
 def ipot_number(text):
@@ -353,7 +357,7 @@ def ipot_number(text):
 
 
 def ipot_parse(html):
-    """Kembalikan dict {buyers:[(kode,nilai)], sellers:[(kode,nilai)], total} | 'INVALID' | None."""
+    """dict {buyers, sellers: [(kode,nilai)], b, s: [[kode,lot,nilai,avg]], total, tlot, fnet} | 'INVALID' | None"""
     import re
     if "invalid stock code" in html.lower():
         return "INVALID"
@@ -361,18 +365,21 @@ def ipot_parse(html):
     if a < 0 or b < 0:
         return None
     strip = lambda x: re.sub(r"<[^>]+>", "", x).replace("&nbsp;", " ").strip()
-    buyers, sellers = [], []
+    B, S = [], []
     for row in html[a:b].split("</tr>"):
         c = [strip(x) for x in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)]
         if len(c) < 9:
             continue
         if c[0]:
-            buyers.append((c[0].upper(), ipot_number(c[2]) or 0))
+            B.append([c[0].upper(), ipot_number(c[1]) or 0, ipot_number(c[2]) or 0, ipot_number(c[3])])
         if c[5]:
-            sellers.append((c[5].upper(), ipot_number(c[7]) or 0))
-    m = re.search(r"T\. Val :\s*([^<]*)<", html)
-    total = ipot_number(m.group(1)) if m else None
-    return {"buyers": buyers, "sellers": sellers, "total": total}
+            S.append([c[5].upper(), ipot_number(c[6]) or 0, ipot_number(c[7]) or 0, ipot_number(c[8])])
+
+    def foot(label):
+        m = re.search(re.escape(label) + r"\s*([^<]*)<", html)
+        return ipot_number(m.group(1)) if m else None
+    return {"buyers": [(x[0], x[2]) for x in B], "sellers": [(x[0], x[2]) for x in S], "b": B, "s": S,
+            "total": foot("T. Val :"), "tlot": foot("T.Lot :"), "fnet": foot("F. NVal :")}
 
 
 def ipot_rows(page):
@@ -403,14 +410,14 @@ def _ipot_err(key):
     IPOT_ERRORS[key] = IPOT_ERRORS.get(key, 0) + 1
 
 
-def ipot_fetch(session, code, day):
-    """day = 'YYYY-MM-DD'. Return rows | [] | 'UNPUBLISHED' | None (gagal)."""
+def ipot_page(session, code, day, board="all"):
+    """Satu halaman broker summary. Return dict | 'INVALID' | 'UNPUBLISHED' | None (gagal)."""
     y, m, d = day.split("-")
     md = f"{m}/{d}/{y}"
     for attempt in range(4):
         try:
-            r = session.get(IPOT_URL, params={"code": code, "start": md, "end": md, "fd": "all", "board": "all"},
-                            timeout=15, headers={**UA, "Referer": "https://www.indopremier.com/"})
+            r = session.get(IPOT_URL, params={"code": code, "start": md, "end": md, "fd": "all", "board": board},
+                            timeout=20, headers={**UA, "Referer": "https://www.indopremier.com/"})
             if r.status_code == 404:          # server IPOT kadang 404 palsu sesaat -> ulangi
                 _ipot_err("HTTP 404")
                 time.sleep(0.5 * 2 ** attempt)
@@ -421,21 +428,42 @@ def ipot_fetch(session, code, day):
                 continue
             page = ipot_parse(r.text)
             if page == "INVALID":
-                return []
+                return "INVALID"
             if page is None:
                 _ipot_err("halaman tanpa tabel: " + r.text[:120].replace("\n", " "))
                 time.sleep(2)
                 continue
-            if not page["buyers"] and not page["sellers"] and (page["total"] or 0) > 0:
+            if not page["b"] and not page["s"] and (page["total"] or 0) > 0:
                 return "UNPUBLISHED"        # ada transaksi tapi daftar broker belum terbit
-            return ipot_rows(page)
+            return page
         except Exception as e:  # noqa: BLE001
             _ipot_err(f"{type(e).__name__}: {str(e)[:100]}")
             time.sleep(2)
     return None
 
 
-def indexalpha_fetch(session, code, day):
+def _pack(p):
+    return {"b": p["b"], "s": p["s"], "t": p["total"], "l": p["tlot"], "f": p["fnet"]}
+
+
+def ipot_one(session, code, day, detail=False):
+    """Return (rows | [] | 'UNPUBLISHED' | None, detail_dict | None)."""
+    p = ipot_page(session, code, day, "all")
+    if p == "INVALID":
+        return [], None
+    if not isinstance(p, dict):
+        return p, None
+    det = None
+    if detail:
+        det = {"all": _pack(p)}
+        for bd in BS_BOARDS:
+            q = ipot_page(session, code, day, bd)
+            if isinstance(q, dict) and (q["b"] or q["s"]):
+                det[bd] = _pack(q)
+    return ipot_rows(p), det
+
+
+def indexalpha_one(session, code, day, detail=False):
     for attempt in range(4):
         try:
             r = session.get(f"{INDEXALPHA}/stocks/broker-summary",
@@ -444,41 +472,46 @@ def indexalpha_fetch(session, code, day):
                 time.sleep(5 + attempt * 10)
                 continue
             if r.status_code == 403:
-                return "QUOTA"
+                return "QUOTA", None
             if r.status_code != 200:
-                return None
+                return None, None
             rows = r.json().get("data") or []
             return [[row.get("code", ""), round(clean(row.get("buy_value")) or 0),
-                     round(clean(row.get("sell_value")) or 0), 1] for row in rows]
+                     round(clean(row.get("sell_value")) or 0), 1] for row in rows], None
         except Exception:  # noqa: BLE001
             time.sleep(3)
-    return None
+    return None, None
 
 
 def get_broker(prices):
     token = os.getenv("INDEXALPHA_TOKEN", "").strip()
     s = requests.Session()
     if token:
-        source, fetch, workers = "IndexAlpha", indexalpha_fetch, 4
+        source, one, workers = "IndexAlpha", indexalpha_one, 4
         s.headers.update({"Authorization": f"Bearer {token}", "accept": "application/json"})
     else:
-        source, fetch, workers = "Indo Premier (IPOT)", ipot_fetch, 3
+        source, one, workers = "Indo Premier (IPOT)", ipot_one, 3
         s.headers.update(UA)
+    via = " lewat jembatan Cloudflare" if (IPOT_PROXY and not token) else ""
     path = DATA / "broker.json"
+    bsdir = DATA / "bs"
     store = read_json(path, {"days": {}})
     days = store.get("days", {}) if store.get("source") in (None, source) else {}   # ganti sumber -> mulai baru
     dates = prices["dates"]
     want = dates[-max(BROKER_BACKFILL, 1):]
     if days:
         want = sorted(set(want) | {d for d in dates[-BROKER_KEEP_DAYS:] if d > max(days)})
-    todo = sorted((d for d in want if d not in days), reverse=True)   # terbaru dulu
+    todo_acc = {d for d in want if d not in days}
+    det_window = dates[-BS_KEEP_DAYS:] if not token else []
+    todo_det = {d for d in det_window if not (bsdir / f"{d}.json").exists()}
+    todo = sorted(todo_acc | todo_det, reverse=True)   # terbaru dulu
     if not todo:
         log(f"4) Broker summary ({source}) sudah lengkap.")
         return
     # Hanya saham likuid: broker mustahil net buy Rp 1 M/hari di saham yang total transaksinya < Rp 1 M
     cands = sorted(c for c, v in prices["value5d"].items() if v >= BROKER_MIN_TURNOVER)
-    log(f"4) Broker summary dari {source}: {len(todo)} hari × {len(cands)} saham likuid")
-    probe = fetch(s, "BBCA", todo[-1])
+    log(f"4) Broker summary dari {source}{via}: {len(todo)} hari × {len(cands)} saham likuid")
+    probe, _ = one(s, "BBCA", todo[-1])
     log(f"  Uji koneksi (BBCA {todo[-1]}): {'OK, ' + str(len(probe)) + ' broker' if isinstance(probe, list) else probe}")
     if probe is None:
         log(f"  Sumber tidak bisa diakses, broker summary dilewati run ini. Penyebab: {IPOT_ERRORS or 'tidak diketahui'}")
@@ -495,13 +528,23 @@ def get_broker(prices):
                           "calendar": [d for d in dates if keep and d >= keep[0]],
                           "days": {d: days[d] for d in keep}})
 
+    def save_index():
+        bsdir.mkdir(parents=True, exist_ok=True)
+        for f in bsdir.glob("????-??-??.json"):           # buang hari di luar jendela
+            if f.stem not in det_window:
+                f.unlink()
+        have = sorted(f.stem for f in bsdir.glob("????-??-??.json"))
+        write_json(bsdir / "index.json", {"updated": now_wib().strftime("%d %b %Y %H:%M WIB"),
+                                          "source": source + via, "topN": IPOT_ROWS, "days": have})
+
     for day in todo:
         if time.time() > deadline:
             log("  Batas waktu tercapai, sisa hari dilanjutkan run berikutnya.")
             break
-        res, failed, unpublished = {}, 0, 0
+        need_det = day in todo_det
+        res, det_map, failed, unpublished = {}, {}, 0, 0
         with ThreadPoolExecutor(max_workers=workers) as ex:
-            for code, rows in zip(cands, ex.map(lambda c: fetch(s, c, day), cands)):
+            for code, (rows, det) in zip(cands, ex.map(lambda c: one(s, c, day, need_det), cands)):
                 if rows == "QUOTA":
                     stop = True
                 elif rows == "UNPUBLISHED":
@@ -510,6 +553,8 @@ def get_broker(prices):
                     failed += 1
                 else:
                     res[code] = [r for r in rows if r[1] >= BROKER_STORE_MIN or (r[1] - r[2]) >= BROKER_STORE_MIN]
+                    if det:
+                        det_map[code] = det
         if stop:
             log("  ⚠ Kuota API IndexAlpha habis.")
         if unpublished > len(cands) // 2 or not res:
@@ -518,9 +563,13 @@ def get_broker(prices):
                 log(f"    penyebab gagal: {IPOT_ERRORS}")
                 IPOT_ERRORS.clear()
             continue   # jangan simpan hari yang belum lengkap
-        days[day] = res
-        save()
-        log(f"  {day}: {len(res)} saham tersimpan, {failed} gagal")
+        if day in todo_acc:
+            days[day] = res
+            save()
+        if need_det and det_map:
+            write_json(bsdir / f"{day}.json", {"day": day, "source": source + via, "data": det_map})
+            save_index()
+        log(f"  {day}: {len(res)} saham{' + tabel lengkap Semua/Reguler/Nego' if need_det else ''}, {failed} gagal")
         if IPOT_ERRORS:
             log(f"    penyebab gagal: {IPOT_ERRORS}")
             IPOT_ERRORS.clear()

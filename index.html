@@ -153,6 +153,15 @@ button.pri:hover{filter:brightness(1.1);transform:translateY(-1px)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 .px{white-space:nowrap}.px .nm{font-family:'Inter',sans-serif}
+.bsgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.bsgrid{grid-template-columns:1fr}}
+.bsh{font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin:4px 0 6px}
+table.bst{width:100%;border-collapse:collapse;font-size:12.5px}
+.bst th{text-align:right;font-weight:600;color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;padding:4px 4px;border-bottom:1px solid var(--bd)}
+.bst td{text-align:right;padding:6px 4px;border-bottom:1px solid rgba(0,150,224,.1);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;vertical-align:top}
+.bst th:nth-child(2),.bst td:nth-child(2){text-align:left;font-family:'Inter',sans-serif}
+.bst td:nth-child(2) .nm{font-size:10px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bst th:first-child,.bst td:first-child{text-align:left;width:18px}
 footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-size:11.5px;padding:10px 14px 40px}
 </style>
 </head>
@@ -497,6 +506,36 @@ function renderFund(){
 ['q','sektor','sort'].forEach(id=>$(id).addEventListener('input',renderFund));
 $('reset').onclick=()=>{filt={};preset='Semua';applyFilt();drawChips();renderFund()};
 
+/* ======================= BROKER SUMMARY (tabel lengkap) ======================= */
+let BS_INDEX=null,BS_CACHE={},BS_DAY=null,BS_BOARD='all',CUR_K=null;
+const BOARDS={all:'Semua',RG:'Reguler',NG:'Nego'};
+function lotfmt(v){if(!isFinite(v))return'–';const a=Math.abs(v);return a>=1e6?fmt(v/1e6,1)+' jt':a>=1e3?fmt(v/1e3,1)+' rb':fmt(v,0);}
+async function bsLoad(day){if(!(day in BS_CACHE))BS_CACHE[day]=await getJSON('data/bs/'+day+'.json');return BS_CACHE[day];}
+function bsTable(rows,side){if(!rows||!rows.length)return `<div class="nm" style="padding:8px 0">Tidak ada ${side==='b'?'pembeli':'penjual'}.</div>`;
+  return `<table class="bst"><thead><tr><th>#</th><th>Broker</th><th>Lot</th><th>Nilai</th><th>Avg</th></tr></thead><tbody>${rows.map((r,i)=>`<tr>
+    <td class="nm">${i+1}</td><td><b class="${side==='b'?'g':'r'}">${esc(r[0])}</b>${bname(r[0])?`<div class="nm">${esc(bname(r[0]))}</div>`:''}</td>
+    <td>${lotfmt(r[1])}</td><td>${rupiah(r[2])}</td><td>${fmt(r[3],0)}</td></tr>`).join('')}</tbody></table>`;}
+async function renderBS(){const box=$('bs-box');if(!box||!CUR_K)return;const k=CUR_K;
+  const head=`<h3 style="margin:0 0 10px;font-size:14px">Broker Summary</h3>`;
+  if(!BS_INDEX||!(BS_INDEX.days||[]).length){box.innerHTML=head+`<div class="nm">Belum ada data broker summary. Data akan muncul otomatis setelah jembatan Cloudflare aktif dan robot berjalan.</div>`;return;}
+  const days=BS_INDEX.days,day=days.includes(BS_DAY)?BS_DAY:days.at(-1);
+  const ctl=`<div class="row" style="margin-bottom:10px"><select id="bs-day">${days.slice().reverse().map(d=>`<option value="${d}" ${d===day?'selected':''}>${tgl(d)} ${d.slice(0,4)}</option>`).join('')}</select>
+    <div class="seg" style="flex:1;margin:0;min-width:200px">${Object.entries(BOARDS).map(([b,l])=>`<button data-bsb="${b}" class="${b===BS_BOARD?'on':''}">${l}</button>`).join('')}</div></div>`;
+  box.innerHTML=head+ctl+'<div class="nm">Memuat…</div>';
+  const D=await bsLoad(day);if(CUR_K!==k)return;
+  const S=D&&D.data&&D.data[k];let body;
+  if(!D)body=`<div class="nm">Data tanggal ini tidak bisa dimuat.</div>`;
+  else if(!S)body=`<div class="nm">${esc(k)} tidak termasuk saham yang diambil broker summary-nya pada ${tgl(day)} (hanya saham dengan nilai transaksi rata-rata ≥ Rp 1 miliar/hari).</div>`;
+  else if(!S[BS_BOARD])body=`<div class="nm">Tidak ada transaksi di pasar <b>${BOARDS[BS_BOARD]}</b> untuk ${esc(k)} pada ${tgl(day)}.</div>`;
+  else{const X=S[BS_BOARD];
+    body=`<div class="stats" style="margin:0 0 10px"><div class="st"><small>Total nilai</small><b>${rupiah(X.t)}</b></div><div class="st"><small>Total lot</small><b>${lotfmt(X.l)}</b></div>
+      <div class="st"><small>Net asing</small><b class="${X.f>=0?'g':'r'}">${isFinite(X.f)?rupiah(X.f):'–'}</b></div></div>
+      <div class="bsgrid"><div><div class="bsh g">▲ Pembeli teratas</div>${bsTable(X.b,'b')}</div><div><div class="bsh r">▼ Penjual teratas</div>${bsTable(X.s,'s')}</div></div>
+      <div class="fv">Sumber: ${esc(BS_INDEX.source||'')} · ${BS_INDEX.topN||10} pembeli & penjual teratas (nilai gross, diurutkan per lot). Angka besar dibulatkan 1 desimal oleh sumber.${BS_BOARD==='all'?'':' Net asing selalu untuk semua pasar.'}</div>`;}
+  box.innerHTML=head+ctl+body;}
+document.addEventListener('change',e=>{if(e.target.id==='bs-day'){BS_DAY=e.target.value;renderBS();}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-bsb]');if(b){BS_BOARD=b.dataset.bsb;renderBS();}});
+
 /* ======================= CARI SAHAM ======================= */
 let PBY=null,PBY_SRC=null,UNIV={};
 function priceIndex(){if(PBY&&PBY_SRC===PRC)return PBY;PBY={};PBY_SRC=PRC;if(!PRC)return PBY;
@@ -509,11 +548,12 @@ let CLIST_N=-1;
 function renderCari(){const raw=$('c-q').value.trim(),q=raw.toUpperCase().split(/\s/)[0],all=allStocks(),out=$('c-out');
   const keys=Object.keys(all).sort();
   if(keys.length!==CLIST_N){CLIST_N=keys.length;$('c-list').innerHTML=keys.map(k=>`<option value="${esc(k)}">${esc(all[k])}</option>`).join('');}
+  CUR_K=null;
   if(!raw){out.innerHTML=`<div class="empty">Ketik kode saham di atas, misalnya <b>BBCA</b>.<br><span class="nm">${keys.length} saham tersedia</span></div>`;return;}
   if(!(q in all)){const m=keys.filter(k=>k.startsWith(q)||(all[k]||'').toUpperCase().includes(raw.toUpperCase())).slice(0,30);
     out.innerHTML=m.length?`<div class="meta">${m.length} saham cocok, ketuk salah satu:</div><div class="row">${m.map(k=>`<button class="bchip sug" data-cari="${esc(k)}">${esc(k)} <small>${esc(all[k]||'')}</small></button>`).join('')}</div>`
       :`<div class="empty">Saham "${esc(raw)}" tidak ditemukan.</div>`;return;}
-  const k=q,P=priceIndex()[k]||[],f=(FUND||[]).find(x=>x.kode===k),last=P.at(-1);
+  const k=q,P=priceIndex()[k]||[],f=(FUND||[]).find(x=>x.kode===k),last=P.at(-1);CUR_K=k;
   let h=`<div class="card"><div class="top"><div><div class="tk">${esc(k)}</div><div class="nm">${esc(all[k]||(f&&f.nama)||'')}${f?' · '+esc(f.sektor):''}</div></div>
     <div class="px">${last?'Rp '+fmt(last[1],0):'–'}<br><span class="nm">${last?'per '+tgl(last[0]):'harga belum ada'}</span></div></div>`;
   if(P.length>15){const cl=P.map(x=>x[1]),rs=rsiSeries(cl,14),r=rs.at(-1),th=num($('r-th').value)||20;
@@ -527,8 +567,9 @@ function renderCari(){const raw=$('c-q').value.trim(),q=raw.toUpperCase().split(
     <div class="stats" style="margin-top:0"><div class="st"><small>PER</small><b>${fmt(f.per)}x</b></div><div class="st"><small>PBV</small><b>${fmt(f.pbv)}x</b></div><div class="st"><small>ROE</small><b>${fmt(f.roe)}%</b></div>
     <div class="st"><small>Div. Yield</small><b>${fmt(f.dy)}%</b></div><div class="st"><small>DER</small><b>${fmt(f.der)}x</b></div><div class="st"><small>MCap</small><b>${fmt(f.mcap,0)} T</b></div></div>
     <div class="fv">Skor fundamental: <b>${f.score}</b> · Nilai wajar Graham: <b>${isFinite(f.fv)?'Rp '+fmt(f.fv,0):'–'}</b> · MoS: <b class="${f.mos>0?'g':'r'}">${isFinite(f.mos)?fmt(f.mos,0)+'%':'–'}</b></div></div>`;}
+  h+=`<div class="card" id="bs-box"></div>`;
   const B=(BRK||[]).filter(r=>r.k===k);
-  h+=`<div class="card"><h3 style="margin:0 0 8px;font-size:14px">Aktivitas broker</h3>`;
+  h+=`<div class="card"><h3 style="margin:0 0 8px;font-size:14px">Akumulasi broker</h3>`;
   if(!B.length)h+=`<div class="nm">${brkDemo?'Data broker belum tersedia: tab Akumulasi masih memakai data demo karena sumber broker belum bisa diakses robot.':'Tidak ada data broker untuk saham ini (saham sepi atau belum terambil).'}</div>`;
   else{const days=[...new Set(B.map(r=>r.d))].sort(),d=days.at(-1),top=B.filter(r=>r.d===d).sort((a,b)=>b.net-a.net).slice(0,5);
     const ak=analyzeAkum().filter(r=>r.k===k&&r.active);
@@ -537,7 +578,7 @@ function renderCari(){const raw=$('c-q').value.trim(),q=raw.toUpperCase().split(
   h+='</div>';
   const other=keys.filter(x=>x!==k&&(x.startsWith(q)||(all[x]||'').toUpperCase().includes(raw.toUpperCase()))).slice(0,20);
   if(other.length)h=`<div class="meta">Saham lain yang cocok dengan "${esc(raw)}":</div><div class="row" style="margin-bottom:12px">${other.map(x=>`<button class="bchip sug" data-cari="${esc(x)}">${esc(x)} <small>${esc(all[x]||'')}</small></button>`).join('')}</div>`+h;
-  out.innerHTML=h;}
+  out.innerHTML=h;renderBS();}
 $('c-q').addEventListener('input',renderCari);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cari]');if(b){$('c-q').value=b.dataset.cari;renderCari();}});
 
@@ -582,6 +623,7 @@ async function getJSON(u){try{const r=await fetch(u+'?v='+Date.now(),{cache:'no-
 async function loadAuto(){
   const [P,F,B,U]=await Promise.all([getJSON('data/prices.json'),getJSON('data/fundamentals.json'),getJSON('data/broker.json'),getJSON('data/universe.json')]);
   if(U&&U.tickers)UNIV=U.tickers;
+  BS_INDEX=await getJSON('data/bs/index.json');
   let lastClose={};
   if(P&&P.dates&&P.dates.length&&P.close){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
