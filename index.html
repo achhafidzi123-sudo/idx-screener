@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Screener Saham IDX</title>
+<meta name="theme-color" content="#040B1A">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0f1419;--card:#1a2129;--card2:#222b35;--tx:#e8edf2;--mut:#8b98a5;--ac:#22c55e;--rd:#ef4444;--bl:#3b82f6;--yl:#eab308;--bd:#2c3640}
 @media (prefers-color-scheme: light){:root{--bg:#f4f6f8;--card:#fff;--card2:#eef1f4;--tx:#111827;--mut:#5b6673;--bd:#dde2e7}}
@@ -77,11 +80,88 @@ code{background:var(--card2);padding:1px 5px;border-radius:5px;font-size:12px}
 .bsum{background:var(--card2);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
 .bsum b{font-size:15px}
 .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+/* ================= TEMA FUTURISTIK · BIRU DORAEMON ================= */
+:root{--doraemon:#0096E0;--dora2:#33B5F5;--dora-dk:#0067A3;--bg:#040B1A;--card:rgba(13,34,64,.55);--card2:rgba(0,150,224,.08);
+  --tx:#E8F4FF;--mut:#86A3C3;--bd:rgba(0,150,224,.22);--ac:#2EE6A6;--rd:#FF5577;--bl:#0096E0;--yl:#FFD23F;--glow:0 0 24px rgba(0,150,224,.35)}
+@media (prefers-color-scheme: light){:root{--bg:#040B1A;--card:rgba(13,34,64,.55);--card2:rgba(0,150,224,.08);--tx:#E8F4FF;--mut:#86A3C3;--bd:rgba(0,150,224,.22)}}
+html{background:var(--bg)}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;letter-spacing:.1px;min-height:100vh;
+  background:
+    radial-gradient(900px 500px at 85% -10%,rgba(0,150,224,.28),transparent 60%),
+    radial-gradient(700px 500px at -10% 30%,rgba(51,181,245,.14),transparent 60%),
+    radial-gradient(600px 400px at 50% 110%,rgba(0,103,163,.25),transparent 60%),
+    var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:linear-gradient(rgba(0,150,224,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,150,224,.07) 1px,transparent 1px);
+  background-size:42px 42px;mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 30%,transparent 75%)}
+header,main{position:relative;z-index:1}
+header{background:rgba(4,11,26,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);
+  border-bottom:1px solid var(--bd);padding:14px 14px 12px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:12px;max-width:900px;margin-left:auto;margin-right:auto}
+.logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;
+  background:conic-gradient(from 210deg,var(--doraemon),var(--dora2),#7FD8FF,var(--doraemon));box-shadow:var(--glow),inset 0 0 12px rgba(255,255,255,.35)}
+.logo svg{width:24px;height:24px}
+h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:20px;font-weight:700;margin:0;line-height:1.1;
+  background:linear-gradient(90deg,#fff 0%,#9EDCFF 45%,var(--dora2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;align-items:center;gap:6px;letter-spacing:.4px;text-transform:uppercase}
+.live{width:7px;height:7px;border-radius:50%;background:var(--ac);box-shadow:0 0 0 0 rgba(46,230,166,.7);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,230,166,.6)}70%{box-shadow:0 0 0 8px rgba(46,230,166,0)}100%{box-shadow:0 0 0 0 rgba(46,230,166,0)}}
+.tabs{max-width:900px;margin:0 auto;background:rgba(0,150,224,.08);border:1px solid var(--bd);border-radius:14px;padding:4px;gap:4px}
+.tab{border:none!important;border-radius:10px;padding:9px 4px;font-size:12.5px;color:var(--mut);transition:all .25s}
+.tab:hover{color:var(--tx)}
+.tab.on{color:#fff;background:linear-gradient(135deg,var(--doraemon),var(--dora-dk));box-shadow:0 4px 18px rgba(0,150,224,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+main{padding-top:16px}
+.box,.card,details,.sheet{background:var(--card);border:1px solid var(--bd);border-radius:18px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
+.card{transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(51,181,245,.7),transparent)}
+.card:hover{transform:translateY(-2px);border-color:rgba(51,181,245,.5);box-shadow:var(--glow),0 10px 30px rgba(0,0,0,.4)}
+.box h3,.card h3{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:.3px}
+.tk{font-family:'Space Grotesk','Inter',sans-serif;font-size:19px;letter-spacing:.5px}
+.px{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:15px}
+.st{background:rgba(0,150,224,.07);border:1px solid rgba(0,150,224,.14);border-radius:12px;padding:8px 10px}
+.st b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px}
+.st small{text-transform:uppercase;letter-spacing:.6px;font-size:10px}
+input,select,textarea{background:rgba(2,10,24,.6);border:1px solid var(--bd);border-radius:12px;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--dora2);box-shadow:0 0 0 3px rgba(0,150,224,.25)}
+#c-q{font-size:17px;padding:14px 16px;border-radius:14px;background:rgba(2,10,24,.75)}
+button{background:rgba(0,150,224,.1);border:1px solid var(--bd);border-radius:12px;transition:all .2s}
+button:hover{border-color:var(--dora2)}
+button.pri{background:linear-gradient(135deg,var(--dora2),var(--doraemon) 55%,var(--dora-dk));border:none;color:#fff;font-weight:700;
+  box-shadow:0 4px 16px rgba(0,150,224,.45),inset 0 1px 0 rgba(255,255,255,.3)}
+button.pri:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.chip{border-radius:999px}
+.chip.on,.bchip{background:linear-gradient(135deg,var(--doraemon),var(--dora-dk));border-color:transparent;box-shadow:0 2px 12px rgba(0,150,224,.4)}
+.bchip.sug{background:rgba(0,150,224,.08);box-shadow:none;border:1px solid var(--bd)}
+.bchip.sug:hover{border-color:var(--dora2);background:rgba(0,150,224,.18)}
+.seg{background:rgba(0,150,224,.08);border:1px solid var(--bd);border-radius:14px}
+.seg button{border:none;background:none;border-radius:10px}
+.seg button.on{background:linear-gradient(135deg,var(--doraemon),var(--dora-dk));color:#fff;box-shadow:0 4px 14px rgba(0,150,224,.4)}
+.banner{border-radius:14px;backdrop-filter:blur(10px);background:rgba(255,210,63,.08);border-color:rgba(255,210,63,.35)}
+.banner.auto{background:rgba(0,150,224,.1);border-color:rgba(51,181,245,.45)}
+.banner.auto b{color:var(--dora2)}
+.bsum{background:rgba(0,150,224,.08);border:1px solid var(--bd);border-radius:14px}
+.bars i{background:linear-gradient(180deg,var(--ac),rgba(46,230,166,.35));border-radius:3px 3px 0 0}
+.bars i.off{background:rgba(0,150,224,.18)}
+.pill{letter-spacing:.5px}
+.empty{padding:40px 0}
+.meta{color:var(--mut)}
+.modal{background:rgba(2,8,20,.7);backdrop-filter:blur(6px)}
+::selection{background:rgba(0,150,224,.45)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(0,150,224,.35);border-radius:8px}
+.pane.on{animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.px{white-space:nowrap}.px .nm{font-family:'Inter',sans-serif}
+footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-size:11.5px;padding:10px 14px 40px}
 </style>
 </head>
 <body>
 <header>
-  <h1>📈 Screener Saham IDX</h1>
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></div>
+    <div><h1>Screener Saham IDX</h1><div class="sub"><span class="live"></span>Data otomatis · Bursa Efek Indonesia</div></div>
+  </div>
   <div class="tabs">
     <button class="tab on" data-t="cari">🔍 Cari</button>
     <button class="tab" data-t="akum">🏦 Akumulasi</button>
