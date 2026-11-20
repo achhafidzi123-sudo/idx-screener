@@ -61,9 +61,10 @@ details .fgrid{padding:0 14px 14px}
 .bars i{flex:1;background:var(--ac);border-radius:2px 2px 0 0;min-height:2px}
 .bars i.off{background:var(--bd)}
 .bars i.neg{background:var(--rd);opacity:.6}
-#r-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#r-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
 #r-list>.empty{grid-column:1/-1}
-.rcard{margin:0!important;padding:6px!important}
+.rcard{margin:0!important;padding:5px 4px!important}
+.rcard .tk{font-size:12px!important}.rcard .nm{font-size:9px!important;white-space:normal!important;line-height:1.2}.rcard .rr small{font-size:7px!important;letter-spacing:0!important}.rcard .rr b{font-size:10px!important}
 .rcard .rt{background:none;border:0;padding:0}
 .rt{background:rgba(0,150,224,.07);border:1px solid rgba(0,150,224,.14);border-radius:12px;padding:8px 9px;min-width:0;text-align:left}
 .rt .tk{font-size:15px;font-weight:800}
@@ -470,11 +471,11 @@ function renderRSI(){if(!PRC)return;
     res.push({k,val:VAL?VAL[k]:NaN,rsi:rs[L-1],hit,close:cl[L-1],chg:(cl[L-1]/cl[Math.max(0,L-6)]-1)*100,date:ds[L-1],tail:rs.slice(-40)});}
   res.sort((a,b)=>(a.hit?a.hit.v:999)-(b.hit?b.hit.v:999));
   $('r-res').textContent=q?`Hasil pencarian "${q}": ${res.length} saham (${res.filter(r=>r.hit).length} dengan RSI ≤ ${fmt(th)})`:`${res.length} saham RSI(${n}) ≤ ${fmt(th)}`+(short.length?` · ${short.length} saham datanya kurang`:'')+(VAL?` · dari ${Object.keys(by).length} saham`:'');
-  const tile=r=>`<div class="rt"><div class="tk">${esc(r.k)}</div><div class="nm">Rp ${fmt(r.close,0)} · <span class="${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}%</span></div>
-    <div class="rr"><small>RSI sekarang</small><b class="${r.rsi<=th?'r':''}">${fmt(r.rsi,2)}</b></div>
-    <div class="rr"><small>RSI terendah</small><b class="${r.hit?'r':''}">${r.hit?fmt(r.hit.v,2):'–'}</b></div>
+  const tile=r=>`<div class="rt"><div class="tk">${esc(r.k)}</div><div class="nm">${fmt(r.close,0)}<br><span class="${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}%</span></div>
+    <div class="rr"><small>RSI kini</small><b class="${r.rsi<=th?'r':''}">${fmt(r.rsi,2)}</b></div>
+    <div class="rr"><small>RSI min</small><b class="${r.hit?'r':''}">${r.hit?fmt(r.hit.v,2):'–'}</b></div>
     <div class="rr"><small>Tgl sentuh</small><b>${r.hit?tgl(r.hit.d):'–'}</b></div>
-    ${isFinite(r.val)?`<div class="rr"><small>Transaksi 5h</small><b>Rp ${rupiah(r.val)}</b></div>`:''}</div>`;
+    ${isFinite(r.val)?`<div class="rr"><small>Nilai 5h</small><b>Rp ${rupiah(r.val)}</b></div>`:''}</div>`;
     $('r-list').innerHTML=res.length?res.map(r=>`<div class="card rcard">${tile(r)}</div>`).join('')
     :q?`<div class="empty">Saham "${esc(q)}" tidak ditemukan${minVal>0?' atau nilai transaksinya di bawah filter minimal':''}.</div>`:`<div class="empty">Tidak ada saham dengan RSI ≤ ${fmt(th)} dalam periode ini.</div>`;}
 ['r-th','r-per','r-look','r-q','r-val'].forEach(id=>$(id).addEventListener('input',renderRSI));
