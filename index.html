@@ -86,11 +86,12 @@ main{max-width:none!important;margin-left:240px!important;margin-right:0!importa
 #p-harm #h-box{grid-column:2;grid-row:1/3;position:sticky;top:10px}
 #p-harm #h-meta{grid-column:1;grid-row:1}#p-harm #h-list{grid-column:1;grid-row:2}
 #p-harm #h-box .fgrid{grid-template-columns:1fr}}
-#h-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+#h-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
 #h-list>.empty{grid-column:1/-1}
 .hcard{margin:0!important;padding:8px 10px!important;text-align:left}
 .hcard .tk{font-size:15px;font-weight:800}.hcard .nm{font-size:11px;margin-bottom:2px}
 .hb{font-size:10px;font-weight:700;margin-left:4px}
+.hdesc{font-size:11px;line-height:1.45;color:var(--mut);margin:4px 0 6px}.hdesc b{color:var(--tx,#e6f1ff)}
 .hsv{width:100%;height:54px;display:block;margin:4px 0 2px}
 .hcard .rr{margin-top:4px}.hcard .rr small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
 .hcard .rr b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
@@ -559,6 +560,25 @@ const HP=[
  {n:'ABCD',abcd:1,c:[.618,.886],d:[['BC',1.272,1.618]]},
  {n:'Three Drives',td:1,r:[.618,.786],e:[1.272,1.618]}
 ];
+const HDESC={'Gartley':'Pola koreksi klasik: B di 0,618 XA, titik D selesai di 0,786 XA (masih di dalam titik X).',
+ 'Bat':'B dangkal (0,382–0,5 XA), titik D selesai di 0,886 XA, koreksi yang dalam.',
+ 'Alt Bat':'B di 0,382 XA, titik D di 1,13 XA, sedikit melewati X.',
+ 'Butterfly':'B dalam (0,786 XA), titik D melewati X di 1,272–1,618 XA.',
+ 'Crab':'Titik D jauh melewati X di 1,618 XA, dengan proyeksi BC ekstrem 2,618–3,618.',
+ 'Deep Crab':'B sangat dalam (0,886 XA), titik D di 1,618 XA.',
+ 'Shark':'C melewati A (1,13–1,618 AB), titik D di 0,886–1,13 XC.',
+ 'Cypher':'C melewati A (1,272–1,414 XA), titik D di 0,786 XC.',
+ '5-0':'B melewati X (1,13–1,618 XA), C 1,618–2,24 AB, titik D di 0,5 BC.',
+ 'Nen Star':'Varian: B 0,382–0,786 XA, C 1,13–1,414 AB, D di 1,272 XA.',
+ 'Stingray':'Varian: B 0,382–0,618 XA, titik D di 1,272–1,414 XA (melewati X).',
+ 'ABCD':'Dua kaki sejajar: C di 0,618–0,886 AB, kaki CD sekitar 1,272–1,618 BC.',
+ 'Three Drives':'Tiga dorongan harga: koreksi 0,618–0,786 dan tiap drive 1,272–1,618 dari koreksinya.'};
+const hR=(a,b)=>a===b?fmt(a,3):fmt(a,3)+'–'+fmt(b,3);
+function hDtgt(sp){if(sp.td)return'drive 3 ('+hR(sp.e[0],sp.e[1])+' koreksi 2)';return sp.d.map(([b,a,c])=>hR(a,c)+' '+b).join(' · ');}
+function hDact(sp,p){if(sp.td){const q=p,s=q[4]>q[3]?1:-1;return'drive 3 '+fmt(((q[4]-q[5])*s)/((q[4]-q[3])*s),2)+' koreksi 2';}
+  const n=p.length,D=p[n-1],C=p[n-2],B=p[n-3],A=sp.abcd?p[n-4]:p[n-4],X=sp.abcd?0:p[n-5];
+  return sp.d.map(([b])=>fmt(b==='XA'?(A-D)/(A-X):b==='BC'?(C-D)/(C-B):(C-D)/(C-X),2)+' '+b).join(' · ');}
+const HST={done:'Titik D sudah terbentuk dan harga mulai berbalik.',zone:'Harga sedang berada di zona D (PRZ), belum berbalik.',near:'Harga mendekati zona D. Pola belum selesai.'};
 function zigzag(cl,th){const P=[];let dir=0,hi={i:0,p:cl[0]},lo={i:0,p:cl[0]};
   for(let i=1;i<cl.length;i++){const p=cl[i];
     if(dir===0){if(p>hi.p)hi={i,p};if(p<lo.p)lo={i,p};
@@ -581,17 +601,17 @@ function hFit(sp,pts,t){
     const r1=c1/d1,e=d2/c1,r2=c2/d2;
     if(!hIn(r1,sp.r[0],sp.r[1],t)||!hIn(e,sp.e[0],sp.e[1],t)||!hIn(r2,sp.r[0],sp.r[1],t))return null;
     const u=p[4]-s*sp.e[0]*(1-t)*c2,w=p[4]-s*sp.e[1]*(1+t)*c2;
-    return{bull:s>0,prz:[Math.min(u,w),Math.max(u,w)],sk:1-(Math.abs(r1-hMid(sp.r))/hMid(sp.r)+Math.abs(r2-hMid(sp.r))/hMid(sp.r)+Math.abs(e-hMid(sp.e))/hMid(sp.e))/3};}
+    return{bull:s>0,rt:`Koreksi 1 ${fmt(r1,2)} · drive 2 ${fmt(e,2)} · koreksi 2 ${fmt(r2,2)}`,prz:[Math.min(u,w),Math.max(u,w)],sk:1-(Math.abs(r1-hMid(sp.r))/hMid(sp.r)+Math.abs(r2-hMid(sp.r))/hMid(sp.r)+Math.abs(e-hMid(sp.e))/hMid(sp.e))/3};}
   if(sp.abcd){const [A,B,C]=pts,bull=C>B;if((A>B)!==bull)return null;
     const rc=(C-B)/(A-B);if(!hIn(rc,sp.c[0],sp.c[1],t))return null;
-    const prz=hPrz(sp,0,A,B,C,t);return prz?{bull,prz,sk:1-Math.abs(rc-hMid(sp.c))/hMid(sp.c)}:null;}
+    const prz=hPrz(sp,0,A,B,C,t);return prz?{bull,rt:`C ${fmt(rc,2)} AB`,prz,sk:1-Math.abs(rc-hMid(sp.c))/hMid(sp.c)}:null;}
   const [X,A,B,C]=pts,bull=C>B,xa=A-X;if(!xa||(xa>0)!==bull||(A>B)!==bull)return null;
   const rb=(A-B)/xa;if(!hIn(rb,sp.b[0],sp.b[1],t))return null;
   let rc,cm;
   if(sp.cx){rc=(C-X)/xa;cm=hMid(sp.cx);if(!hIn(rc,sp.cx[0],sp.cx[1],t))return null;}
   else{rc=(C-B)/(A-B);cm=hMid(sp.c);if(!(rc>0)||!hIn(rc,sp.c[0],sp.c[1],t))return null;}
   const prz=hPrz(sp,X,A,B,C,t);if(!prz)return null;
-  return{bull,prz,sk:1-(Math.abs(rb-hMid(sp.b))/hMid(sp.b)+Math.abs(rc-cm)/cm)/2};}
+  return{bull,rt:`B ${fmt(rb,2)} XA · C ${fmt(rc,2)} ${sp.cx?'XA':'AB'}`,prz,sk:1-(Math.abs(rb-hMid(sp.b))/hMid(sp.b)+Math.abs(rc-cm)/cm)/2};}
 function harmScan(cl,o){
   const out=[],{P,dir,ex}=zigzag(cl,o.zz),L=cl.length,now=cl[L-1],t=o.tol;
   for(const sp of HP){
@@ -599,12 +619,12 @@ function harmScan(cl,o){
     const np=sp.td?5:sp.abcd?3:4;let got=false;
     if(P.length>=np+1){const w=P.slice(-(np+1)),D=w[np],f=hFit(sp,w.slice(0,np).map(x=>x.p),t);
       if(f&&(f.bull?D.t==='L':D.t==='H')&&D.p>=f.prz[0]*(1-t/2)&&D.p<=f.prz[1]*(1+t/2)&&L-1-D.i<=o.days){
-        out.push({n:sp.n,v:sp.v,bull:f.bull,prz:f.prz,sk:f.sk,st:'done',pts:w,now});got=true;}}
+        out.push({n:sp.n,v:sp.v,bull:f.bull,prz:f.prz,sk:f.sk,st:'done',pts:w,now,rt:f.rt,dt:hDact(sp,w.map(x=>x.p))});got=true;}}
     if(!got&&P.length>=np&&ex){const w=P.slice(-np),f=hFit(sp,w.map(x=>x.p),t);
       if(f&&(f.bull?dir===-1:dir===1)){
         const z=f.prz,inz=ex.p>=z[0]&&ex.p<=z[1];
         const near=f.bull?(ex.p>z[1]&&(now-z[1])/now<=o.prox):(ex.p<z[0]&&(z[0]-now)/now<=o.prox);
-        if(inz||near)out.push({n:sp.n,v:sp.v,bull:f.bull,prz:z,sk:f.sk,st:inz?'zone':'near',pts:w.concat([{i:ex.i,p:ex.p}]),now});}}
+        if(inz||near)out.push({n:sp.n,v:sp.v,bull:f.bull,prz:z,sk:f.sk,st:inz?'zone':'near',pts:w.concat([{i:ex.i,p:ex.p}]),now,rt:f.rt,dt:hDtgt(sp)});}}
   }
   return out;}
 function harmSvg(r,L){const pts=r.pts,lab=r.n==='Three Drives'?['0','1','2','3','4','5']:r.n==='ABCD'?['A','B','C','D']:['X','A','B','C','D'];
@@ -631,6 +651,7 @@ function renderHarm(){if(!PRC||!$('h-list'))return;
   $('h-res').textContent=`${res.length} pola ditemukan dari ${Object.keys(HC).length} saham`+(res.length>300?' · menampilkan 300 teratas':'');
   $('h-list').innerHTML=res.length?res.slice(0,300).map(r=>`<div class="card hcard"><div class="tk">${esc(r.k)} <span class="hb ${r.bull?'g':'r'}">${r.bull?'▲ Bullish':'▼ Bearish'}</span></div>
     <div class="nm">${esc(r.n)}${r.v?'*':''} · ${ST[r.st]}</div>${harmSvg(r,r.L)}
+    <div class="hdesc"><b>Pola ${esc(r.n)} ${r.bull?'bullish':'bearish'}</b> — ${esc(HDESC[r.n]||'')}<br>Terukur: ${esc(r.rt||'')}<br>${r.st==='done'?'D terukur: '+esc(r.dt||''):'Target D: '+esc(r.dt||'')}<br><i>${HST[r.st]} ${r.bull?'Potensi pantulan naik dari zona D.':'Potensi turun dari zona D.'}</i></div>
     <div class="rr"><small>Harga kini</small><b>Rp ${fmt(r.now,0)}</b></div>
     <div class="rr"><small>Zona PRZ (D)</small><b>${fmt(r.prz[0],0)} – ${fmt(r.prz[1],0)}</b></div>
     <div class="rr"><small>Kecocokan</small><b>${Math.round(r.sk*100)}%</b></div>
