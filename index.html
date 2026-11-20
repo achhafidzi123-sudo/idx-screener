@@ -12,7 +12,7 @@ body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;b
 header{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 14px 0;border-bottom:1px solid var(--bd)}
 h1{font-size:19px;margin:0 0 10px}
 .tabs{display:flex;gap:4px}
-.tab{flex:1;background:none;border:none;border-bottom:3px solid transparent;border-radius:0;padding:9px 4px;font-size:14px;font-weight:600;color:var(--mut);cursor:pointer}
+.tab{flex:1;background:none;border:none;border-bottom:3px solid transparent;border-radius:0;padding:9px 2px;font-size:13px;white-space:nowrap;font-weight:600;color:var(--mut);cursor:pointer}
 .tab.on{color:var(--tx);border-color:var(--ac)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 11px}
@@ -83,7 +83,8 @@ code{background:var(--card2);padding:1px 5px;border-radius:5px;font-size:12px}
 <header>
   <h1>📈 Screener Saham IDX</h1>
   <div class="tabs">
-    <button class="tab on" data-t="akum">🏦 Akumulasi</button>
+    <button class="tab on" data-t="cari">🔍 Cari</button>
+    <button class="tab" data-t="akum">🏦 Akumulasi</button>
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </div>
@@ -91,7 +92,17 @@ code{background:var(--card2);padding:1px 5px;border-radius:5px;font-size:12px}
 
 <main>
 <!-- ================= AKUMULASI BROKER ================= -->
-<section class="pane on" id="p-akum">
+<section class="pane on" id="p-cari">
+  <div class="box">
+    <h3>Cari data saham</h3>
+    <input id="c-q" type="search" list="c-list" placeholder="Ketik kode atau nama, mis. BBCA atau bank" autocapitalize="characters" style="width:100%">
+    <datalist id="c-list"></datalist>
+    <div class="nm" style="margin-top:6px">Menampilkan harga, RSI, fundamental, dan aktivitas broker untuk satu saham.</div>
+  </div>
+  <div id="c-out"><div class="empty">Ketik kode saham di atas, misalnya <b>BBCA</b>.</div></div>
+</section>
+
+<section class="pane" id="p-akum">
   <div class="banner" id="b-akum"><b>Data demo.</b> Kode saham & broker di sini fiktif, hanya untuk mencoba. Impor <b>broker summary harian</b> Anda (dari aplikasi sekuritas) untuk hasil nyata.</div>
   <div class="seg" id="a-seg"><button data-am="all" class="on">👥 Semua broker</button><button data-am="pick">🎯 Broker tertentu</button></div>
   <div class="box" id="a-pickbox" style="display:none">
@@ -303,6 +314,8 @@ function renderAkum(){if(!BRK)return;const all=analyzeAkum(),lbl=$('a-mode').val
     return `<div class="bsum"><b>${esc(c)}</b> ${bname(c)?`<span class="nm">${esc(bname(c))}</span>`:''}<br>${act.length?`Sedang akumulasi di <b class="g">${act.length} saham</b>: ${act.map(r=>`${esc(r.k)} (${r.len}h)`).join(', ')} · total ${lbl} Rp ${rupiah(tot)}`:'<span class="nm">Tidak sedang akumulasi saham apa pun dengan kriteria ini.</span>'}</div>`}).join(''):'';
   $('a-list').innerHTML=pick&&!AK_PICK.length?'<div class="empty">Pilih minimal satu broker di atas.</div>'
     :res.length?res.map(r=>card(r,lbl)).join('')
+    :q&&!BRK.some(r=>r.k.includes(q))?`<div class="empty">Belum ada data broker untuk "${esc(q)}".${brkDemo?'<br>Tab ini masih memakai <b>data demo</b> (kode saham fiktif AAAA, BBBB, …) karena sumber broker belum bisa diakses robot.':''}</div>`
+    :q?`<div class="empty">Tidak ada broker yang akumulasi "${esc(q)}" sesuai kriteria.<br>Lihat detail broker saham ini di tab 🔍 Cari.</div>`
     :'<div class="empty">Belum ada akumulasi yang memenuhi kriteria.<br>Coba turunkan minimal hari atau nilai beli.</div>';}
 $('a-seg').onclick=e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.am);};
 $('a-bkadd').onclick=()=>{if(!addBroker($('a-bk').value))$('a-bk').style.borderColor='var(--rd)';};
@@ -339,17 +352,17 @@ function renderRSI(){if(!PRC)return;
     if(cl.length<=n){short.push(k);continue;}
     const rs=rsiSeries(cl,n),L=rs.length;let hit=null;
     for(let i=L-1;i>=Math.max(0,L-look);i--)if(rs[i]<=th&&(!hit||rs[i]<hit.v))hit={v:rs[i],d:ds[i]};
-    if(!hit)continue;
+    if(!hit&&!q)continue;
     res.push({k,val:VAL?VAL[k]:NaN,rsi:rs[L-1],hit,close:cl[L-1],chg:(cl[L-1]/cl[Math.max(0,L-6)]-1)*100,date:ds[L-1],tail:rs.slice(-40)});}
-  res.sort((a,b)=>a.hit.v-b.hit.v);
-  $('r-res').textContent=`${res.length} saham RSI(${n}) ≤ ${fmt(th)}`+(short.length?` · ${short.length} saham datanya kurang`:'')+(VAL?` · dari ${Object.keys(by).length} saham`:'');
+  res.sort((a,b)=>(a.hit?a.hit.v:999)-(b.hit?b.hit.v:999));
+  $('r-res').textContent=q?`Hasil pencarian "${q}": ${res.length} saham (${res.filter(r=>r.hit).length} dengan RSI ≤ ${fmt(th)})`:`${res.length} saham RSI(${n}) ≤ ${fmt(th)}`+(short.length?` · ${short.length} saham datanya kurang`:'')+(VAL?` · dari ${Object.keys(by).length} saham`:'');
   $('r-list').innerHTML=res.length?res.map(r=>`<div class="card"><div class="top"><div><div class="tk">${esc(r.k)}</div><div class="nm">Data terakhir ${tgl(r.date)}</div></div>
     <div class="px">Rp ${fmt(r.close,0)}<br><span class="nm ${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}% (5 hari)</span></div></div>
     <div class="stats"><div class="st"><small>RSI sekarang</small><b class="${r.rsi<=th?'r':''}">${fmt(r.rsi,2)}</b></div>
-    <div class="st"><small>RSI terendah</small><b class="r">${fmt(r.hit.v,2)}</b></div>
-    <div class="st"><small>Tanggal sentuh</small><b>${tgl(r.hit.d)}</b></div></div>
+    <div class="st"><small>RSI terendah</small><b class="${r.hit?'r':''}">${r.hit?fmt(r.hit.v,2):'–'}</b></div>
+    <div class="st"><small>Tanggal sentuh</small><b>${r.hit?tgl(r.hit.d):'tidak ≤ '+fmt(th)}</b></div></div>
     ${spark(r.tail,th)}${isFinite(r.val)?`<div class="fv">Nilai transaksi rata-rata 5 hari: <b>Rp ${rupiah(r.val)}</b></div>`:''}<div class="fv">RSI 40 hari terakhir · area merah = zona ≤ ${fmt(th)}, garis putus atas = 70</div></div>`).join('')
-    :`<div class="empty">Tidak ada saham dengan RSI ≤ ${fmt(th)} dalam periode ini.</div>`;}
+    :q?`<div class="empty">Saham "${esc(q)}" tidak ditemukan${minVal>0?' atau nilai transaksinya di bawah filter minimal':''}.</div>`:`<div class="empty">Tidak ada saham dengan RSI ≤ ${fmt(th)} dalam periode ini.</div>`;}
 ['r-th','r-per','r-look','r-q','r-val'].forEach(id=>$(id).addEventListener('input',renderRSI));
 
 /* ======================= FUNDAMENTAL ======================= */
@@ -404,6 +417,50 @@ function renderFund(){
 ['q','sektor','sort'].forEach(id=>$(id).addEventListener('input',renderFund));
 $('reset').onclick=()=>{filt={};preset='Semua';applyFilt();drawChips();renderFund()};
 
+/* ======================= CARI SAHAM ======================= */
+let PBY=null,PBY_SRC=null,UNIV={};
+function priceIndex(){if(PBY&&PBY_SRC===PRC)return PBY;PBY={};PBY_SRC=PRC;if(!PRC)return PBY;
+  PRC.forEach(r=>{(PBY[r.k]=PBY[r.k]||[]).push([r.d,r.c])});for(const k in PBY)PBY[k].sort((a,b)=>a[0]<b[0]?-1:1);return PBY;}
+function allStocks(){const P=priceIndex(),m={};for(const k in UNIV)m[k]=UNIV[k];for(const k in P)if(!(k in m))m[k]='';
+  (FUND||[]).forEach(f=>{if(f.nama)m[f.kode]=f.nama;else if(!(f.kode in m))m[f.kode]='';});return m;}
+function chg(arr,n){if(arr.length<=n)return NaN;return (arr.at(-1)[1]/arr.at(-1-n)[1]-1)*100;}
+const pc=v=>isFinite(v)?`<b class="${v>=0?'g':'r'}">${v>0?'+':''}${fmt(v)}%</b>`:'<b>–</b>';
+let CLIST_N=-1;
+function renderCari(){const raw=$('c-q').value.trim(),q=raw.toUpperCase().split(/\s/)[0],all=allStocks(),out=$('c-out');
+  const keys=Object.keys(all).sort();
+  if(keys.length!==CLIST_N){CLIST_N=keys.length;$('c-list').innerHTML=keys.map(k=>`<option value="${esc(k)}">${esc(all[k])}</option>`).join('');}
+  if(!raw){out.innerHTML=`<div class="empty">Ketik kode saham di atas, misalnya <b>BBCA</b>.<br><span class="nm">${keys.length} saham tersedia</span></div>`;return;}
+  if(!(q in all)){const m=keys.filter(k=>k.startsWith(q)||(all[k]||'').toUpperCase().includes(raw.toUpperCase())).slice(0,30);
+    out.innerHTML=m.length?`<div class="meta">${m.length} saham cocok, ketuk salah satu:</div><div class="row">${m.map(k=>`<button class="bchip sug" data-cari="${esc(k)}">${esc(k)} <small>${esc(all[k]||'')}</small></button>`).join('')}</div>`
+      :`<div class="empty">Saham "${esc(raw)}" tidak ditemukan.</div>`;return;}
+  const k=q,P=priceIndex()[k]||[],f=(FUND||[]).find(x=>x.kode===k),last=P.at(-1);
+  let h=`<div class="card"><div class="top"><div><div class="tk">${esc(k)}</div><div class="nm">${esc(all[k]||(f&&f.nama)||'')}${f?' · '+esc(f.sektor):''}</div></div>
+    <div class="px">${last?'Rp '+fmt(last[1],0):'–'}<br><span class="nm">${last?'per '+tgl(last[0]):'harga belum ada'}</span></div></div>`;
+  if(P.length>15){const cl=P.map(x=>x[1]),rs=rsiSeries(cl,14),r=rs.at(-1),th=num($('r-th').value)||20;
+    const st=r<=th?['r','Oversold (≤ '+fmt(th)+')']:r>=70?['g','Overbought (≥ 70)']:['','Normal'];
+    h+=`<div class="stats"><div class="st"><small>1 hari</small>${pc(chg(P,1))}</div><div class="st"><small>1 minggu</small>${pc(chg(P,5))}</div><div class="st"><small>1 bulan</small>${pc(chg(P,21))}</div></div>
+    <div class="stats"><div class="st"><small>RSI(14)</small><b class="${st[0]}">${fmt(r,2)}</b></div><div class="st" style="grid-column:span 2"><small>Status RSI</small><b class="${st[0]}">${st[1]}</b></div></div>
+    ${spark(rs.slice(-60),th)}<div class="fv">RSI 60 hari terakhir</div>
+    ${VAL&&isFinite(VAL[k])?`<div class="fv">Nilai transaksi rata-rata 5 hari: <b>Rp ${rupiah(VAL[k])}</b></div>`:''}`;}
+  h+='</div>';
+  if(f){h+=`<div class="card"><h3 style="margin:0 0 8px;font-size:14px">Fundamental</h3>
+    <div class="stats" style="margin-top:0"><div class="st"><small>PER</small><b>${fmt(f.per)}x</b></div><div class="st"><small>PBV</small><b>${fmt(f.pbv)}x</b></div><div class="st"><small>ROE</small><b>${fmt(f.roe)}%</b></div>
+    <div class="st"><small>Div. Yield</small><b>${fmt(f.dy)}%</b></div><div class="st"><small>DER</small><b>${fmt(f.der)}x</b></div><div class="st"><small>MCap</small><b>${fmt(f.mcap,0)} T</b></div></div>
+    <div class="fv">Skor fundamental: <b>${f.score}</b> · Nilai wajar Graham: <b>${isFinite(f.fv)?'Rp '+fmt(f.fv,0):'–'}</b> · MoS: <b class="${f.mos>0?'g':'r'}">${isFinite(f.mos)?fmt(f.mos,0)+'%':'–'}</b></div></div>`;}
+  const B=(BRK||[]).filter(r=>r.k===k);
+  h+=`<div class="card"><h3 style="margin:0 0 8px;font-size:14px">Aktivitas broker</h3>`;
+  if(!B.length)h+=`<div class="nm">${brkDemo?'Data broker belum tersedia: tab Akumulasi masih memakai data demo karena sumber broker belum bisa diakses robot.':'Tidak ada data broker untuk saham ini (saham sepi atau belum terambil).'}</div>`;
+  else{const days=[...new Set(B.map(r=>r.d))].sort(),d=days.at(-1),top=B.filter(r=>r.d===d).sort((a,b)=>b.net-a.net).slice(0,5);
+    const ak=analyzeAkum().filter(r=>r.k===k&&r.active);
+    h+=`${ak.length?`<div class="fv" style="margin-top:0">Sedang diakumulasi: ${ak.map(r=>`<b class="g">${esc(r.b)}</b> (${r.len} hari)`).join(', ')}</div>`:'<div class="nm">Tidak ada broker yang akumulasi sesuai kriteria tab Akumulasi.</div>'}
+    <div class="nm" style="margin:8px 0 4px">Net buy terbesar ${tgl(d)}:</div>${top.map(r=>`<div class="fv" style="margin:2px 0">${esc(r.b)} ${bname(r.b)?'<span class="nm">'+esc(bname(r.b))+'</span>':''} · <b class="${r.net>=0?'g':'r'}">Rp ${rupiah(r.net)}</b></div>`).join('')}`;}
+  h+='</div>';
+  const other=keys.filter(x=>x!==k&&(x.startsWith(q)||(all[x]||'').toUpperCase().includes(raw.toUpperCase()))).slice(0,20);
+  if(other.length)h=`<div class="meta">Saham lain yang cocok dengan "${esc(raw)}":</div><div class="row" style="margin-bottom:12px">${other.map(x=>`<button class="bchip sug" data-cari="${esc(x)}">${esc(x)} <small>${esc(all[x]||'')}</small></button>`).join('')}</div>`+h;
+  out.innerHTML=h;}
+$('c-q').addEventListener('input',renderCari);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cari]');if(b){$('c-q').value=b.dataset.cari;renderCari();}});
+
 /* ======================= IMPORT MODAL ======================= */
 const HELP={
  broker:{t:'Impor broker summary harian',h:`<p>Satu baris = satu broker, satu saham, satu hari. Gabungkan beberapa hari dalam satu file.</p>
@@ -443,7 +500,8 @@ const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.c
 /* ======================= DATA OTOMATIS (diperbarui robot GitHub tiap hari bursa) ======================= */
 async function getJSON(u){try{const r=await fetch(u+'?v='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
 async function loadAuto(){
-  const [P,F,B]=await Promise.all([getJSON('data/prices.json'),getJSON('data/fundamentals.json'),getJSON('data/broker.json')]);
+  const [P,F,B,U]=await Promise.all([getJSON('data/prices.json'),getJSON('data/fundamentals.json'),getJSON('data/broker.json'),getJSON('data/universe.json')]);
+  if(U&&U.tickers)UNIV=U.tickers;
   let lastClose={};
   if(P&&P.dates&&P.dates.length&&P.close){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
@@ -466,7 +524,7 @@ async function loadAuto(){
       banner('broker','auto',`<b>● Otomatis</b> · ${Object.keys(B.days[days.at(-1)]).length} saham likuid dipantau · ${days.length} hari bursa s.d. <b>${tgl(days.at(-1))}</b><br><span class="nm">Diperbarui ${esc(B.updated||'')} · ${esc(B.source||'')}${B.topN?` · gratis: ${B.topN} pembeli teratas per saham, net beli dihitung konservatif (tidak pernah dilebihkan)`:''}</span>`);renderAkum();}
   }
 }
-loadAuto();
+loadAuto().then(()=>renderCari());
 </script>
 </body>
 </html>
