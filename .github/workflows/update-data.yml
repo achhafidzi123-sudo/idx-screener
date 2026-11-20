@@ -47,7 +47,8 @@ jobs:
             echo "Tidak ada perubahan data."
           else
             git commit -m "Update data $(TZ=Asia/Jakarta date +'%Y-%m-%d')"
-            git push
+            git pull --rebase -X theirs origin main || true
+            git push || echo "Push gagal, data tetap dipakai untuk website kali ini"
           fi
 
       - name: Siapkan file website
