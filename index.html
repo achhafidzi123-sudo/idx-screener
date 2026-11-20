@@ -95,6 +95,10 @@ main{max-width:none!important;margin-left:240px!important;margin-right:0!importa
 .hcard .rr{margin-top:4px}.hcard .rr small{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
 .hcard .rr b{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
 .hhelp{margin-top:10px}.hhelp summary{cursor:pointer;color:var(--dora2,#33b5f5);font-size:12px}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}@media (max-width:700px){.agrid{grid-template-columns:1fr}}
+.aev{padding:8px 0;border-top:1px solid var(--bd);text-align:left}.aev:first-of-type{border-top:0}
+.achips{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px}
+.achip{background:rgba(0,150,224,.07);border:1px solid rgba(0,150,224,.14);border-radius:10px;padding:6px 8px;text-align:left}.achip b{display:block;font-size:14px}
 svg.spark{width:100%;height:60px;display:block;margin-top:8px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .modal.on{display:flex}
@@ -212,6 +216,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
     <button class="tab" data-t="akum">🏦 Akumulasi</button>
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
     <button class="tab" data-t="harm">🔷 Harmonik</button>
+    <button class="tab" data-t="astro">🌙 Astronacci</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -302,6 +307,13 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
   </div>
   <div class="meta" id="h-meta"><span id="h-res"></span></div>
   <div id="h-list"></div>
+</section>
+
+<section class="pane" id="p-astro">
+  <div class="box"><h3>Kalender Astro &amp; Fibonacci waktu</h3>
+    <div class="fgrid"><div class="f"><label>Rentang ke depan</label><select id="as-win"><option value="30">30 hari</option><option value="60">60 hari</option><option value="90" selected>90 hari</option><option value="180">180 hari</option></select></div></div>
+    <div class="nm" id="as-note" style="line-height:1.55;margin-top:10px">Memuat…</div></div>
+  <div class="agrid"><div class="box" id="as-up"></div><div class="box" id="as-dn"></div></div>
 </section>
 
 <section class="pane" id="p-fund">
@@ -626,6 +638,76 @@ function renderHarm(){if(!PRC||!$('h-list'))return;
     :`<div class="empty">Belum ada saham yang cocok. Coba perbesar toleransi, kecilkan ayunan zigzag, atau ubah filter.</div>`;}
 ['h-zz','h-tol','h-prox','h-days','h-val','h-q','h-pat','h-dir','h-st'].forEach(id=>$(id)&&$(id).addEventListener('input',renderHarm));
 
+/* ======================= ASTRONACCI (astro + Fibonacci waktu) ======================= */
+function moonPhaseJD(k,ph){k=k+ph;const T=k/1236.85,r=Math.PI/180,s=Math.sin;
+  const jde=2451550.09766+29.530588861*k+0.00015437*T*T-0.00000015*T*T*T+0.00000000073*T*T*T*T,E=1-0.002516*T-0.0000074*T*T;
+  const M=(2.5534+29.1053567*k-0.0000014*T*T)*r,Mp=(201.5643+385.81693528*k+0.0107582*T*T+0.00001238*T*T*T)*r,
+    F=(160.7108+390.67050284*k-0.0016118*T*T-0.00000227*T*T*T)*r,Om=(124.7746-1.56375588*k+0.0020672*T*T)*r;
+  const c=ph===0?-0.4072*s(Mp)+0.17241*E*s(M)+0.01608*s(2*Mp)+0.01039*s(2*F)+0.00739*E*s(Mp-M)-0.00514*E*s(Mp+M)+0.00208*E*E*s(2*M)-0.00111*s(Mp-2*F)-0.00057*s(Mp+2*F)+0.00056*E*s(2*Mp+M)-0.00042*s(3*Mp)+0.00042*E*s(M+2*F)+0.00038*E*s(M-2*F)-0.00024*E*s(2*Mp-M)-0.00017*s(Om)-0.00007*s(Mp+2*M)
+   :-0.40614*s(Mp)+0.17302*E*s(M)+0.01614*s(2*Mp)+0.01043*s(2*F)+0.00734*E*s(Mp-M)-0.00515*E*s(Mp+M)+0.00209*E*E*s(2*M)-0.00111*s(Mp-2*F)-0.00057*s(Mp+2*F)+0.00056*E*s(2*Mp+M)-0.00042*s(3*Mp)+0.00042*E*s(M+2*F)+0.00038*E*s(M-2*F)-0.00024*E*s(2*Mp-M)-0.00017*s(Om)-0.00007*s(Mp+2*M);
+  return jde+c;}
+function moonPhases(ms0,ms1){const y0=new Date(ms0).getUTCFullYear()+(new Date(ms0).getUTCMonth())/12,y1=new Date(ms1).getUTCFullYear()+new Date(ms1).getUTCMonth()/12,out=[];
+  for(let k=Math.floor((y0-2000)*12.3685)-1;k<=Math.ceil((y1-2000)*12.3685)+1;k++)for(const ph of[0,.5]){const ms=(moonPhaseJD(k,ph)-2440587.5)*864e5;if(ms>=ms0&&ms<=ms1)out.push({ms,t:ph===0?'baru':'purnama'});}
+  return out.sort((a,b)=>a.ms-b.ms);}
+// Gerhana (NASA) dan Merkurius retrograde (almanac/farmersalmanac) — tanggal UTC, toleransi ±1 hari
+const GERHANA=[['2027-02-06','Gerhana Matahari cincin'],['2027-02-20','Gerhana Bulan penumbra'],['2027-07-18','Gerhana Bulan penumbra'],['2027-08-02','Gerhana Matahari total'],['2027-08-17','Gerhana Bulan penumbra']];
+const MERK=[['2026-10-24','2026-11-13'],['2027-02-09','2027-03-03'],['2027-06-10','2027-07-04'],['2027-10-07','2027-10-28']];
+const wibDay=ms=>new Date(ms+7*36e5).toISOString().slice(0,10);
+const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'],BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const tglL=d=>{const x=new Date(d+'T00:00:00Z');return `${HARI[x.getUTCDay()]}, ${x.getUTCDate()} ${BLN[x.getUTCMonth()]} ${x.getUTCFullYear()}`;};
+const addDays=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*864e5).toISOString().slice(0,10);
+function addTradingDays(d,n){let x=d;while(n>0){x=addDays(x,1);const w=new Date(x+'T00:00:00Z').getUTCDay();if(w!==0&&w!==6)n--;}return x;}
+let AC=null,ACsrc=null;
+function proxyIndex(){ // indeks proksi: rata-rata imbal hasil harian saham likuid
+  if(ACsrc===PRC&&AC)return AC;const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const sum={},cnt={};
+  for(const k in by){if(VAL&&k in VAL&&VAL[k]<1e9)continue;const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1);
+    for(let i=1;i<a.length;i++){if(!(a[i-1][1]>0))continue;const r=a[i][1]/a[i-1][1]-1;if(Math.abs(r)>0.5)continue;sum[a[i][0]]=(sum[a[i][0]]||0)+r;cnt[a[i][0]]=(cnt[a[i][0]]||0)+1;}}
+  const ds=Object.keys(sum).filter(d=>cnt[d]>=50).sort();let v=100;const idx=[{d:ds[0]&&addDays(ds[0],-1),v}];
+  ds.forEach(d=>{v*=1+sum[d]/cnt[d];idx.push({d,v});});AC=idx.slice(1);ACsrc=PRC;return AC;}
+function renderAstro(){if(!PRC||!$('as-up'))return;
+  const win=parseInt($('as-win').value)||90,today=wibDay(Date.now()),end=addDays(today,win),idx=proxyIndex();
+  const up=[],dn=[];
+  // tren indeks proksi 20 hari
+  const L=idx.length,trendUp=L>20?idx[L-1].v>idx[L-21].v:true;
+  const rev=trendUp?dn:up,revTxt=trendUp?'tren naik, rawan berbalik turun':'tren turun, rawan berbalik naik';
+  // fase bulan
+  moonPhases(Date.parse(today+'T00:00:00Z'),Date.parse(end+'T23:59:59Z')).forEach(e=>{const d=wibDay(e.ms);
+    (e.t==='baru'?up:dn).push({d,t:e.t==='baru'?'🌑 Bulan Baru':'🌕 Bulan Purnama',n:'fase bulan (jam '+new Date(e.ms+7*36e5).toISOString().slice(11,16)+' WIB)'});});
+  // gerhana
+  GERHANA.forEach(([d,t])=>{if(d>=today&&d<=end)rev.push({d,t:'🌘 '+t,n:'gerhana · '+revTxt});});
+  // merkurius retrograde
+  MERK.forEach(([a,b])=>{if(a>=today&&a<=end)dn.push({d:a,t:'☿ Merkurius mulai retrograde',n:'awal retrograde (±1 hari)'});if(b>=today&&b<=end)up.push({d:b,t:'☿ Merkurius berhenti retrograde',n:'akhir retrograde (±1 hari)'});});
+  // Fibonacci waktu dari pivot terakhir indeks proksi
+  let fibTxt='';
+  if(idx.length>30){const z=zigzag(idx.map(x=>x.v),0.04),pv=z.P.at(-1);
+    if(pv){const pd=idx[pv.i].d,low=pv.t==='L',tgt=low?dn:up;
+      fibTxt=`Pivot terakhir indeks proksi: ${low?'dasar':'puncak'} ${tglL(pd)}.`;
+      [8,13,21,34,55,89,144].forEach(n=>{const d=addTradingDays(pd,n);if(d>=today&&d<=end)tgt.push({d,t:'🔢 Fibonacci hari ke-'+n,n:'dari '+(low?'dasar':'puncak')+' '+tglL(pd)+(low?' → rawan berbalik turun':' → rawan berbalik naik')});});}}
+  const cmp=(a,b)=>a.d<b.d?-1:a.d>b.d?1:0;up.sort(cmp);dn.sort(cmp);
+  const li=a=>a.length?a.map(e=>{const dd=Math.round((Date.parse(e.d)-Date.parse(today))/864e5);return `<div class="aev"><b>${tglL(e.d)}</b> <span class="nm">${dd===0?'hari ini':dd+' hari lagi'}</span><div>${e.t}</div><div class="nm">${e.n}</div></div>`}).join(''):'<div class="empty">Tidak ada tanggal dalam rentang ini.</div>';
+  // daftar saham
+  const sUp=[],sDn=[],o={zz:.06,tol:.08,prox:.03,days:10,pat:''};
+  if(HCsrc!==PRC)renderHarm();
+  for(const k in HC){const cl=HC[k];if(cl.length<40)continue;if(VAL&&k in VAL&&VAL[k]<1e9)continue;
+    const rs=rsiSeries(cl,14),rn=rs[rs.length-1];let pu=null,pd=null;
+    for(const r of harmScan(cl,o))if(r.st!=='done'){if(r.bull&&!pu)pu=r.n;if(!r.bull&&!pd)pd=r.n;}
+    const v=VAL?VAL[k]||0:0;
+    if(rn<=30||pu)sUp.push({k,rn,p:pu,v});if(rn>=70||pd)sDn.push({k,rn,p:pd,v});}
+  const chips=(a,why)=>a.sort((x,y)=>y.v-x.v).slice(0,30).map(s=>`<div class="achip"><b>${esc(s.k)}</b><span class="nm">RSI ${fmt(s.rn,0)}${s.p?' · '+esc(s.p):''}</span></div>`).join('')||'<div class="empty">Tidak ada.</div>';
+  $('as-up').innerHTML=`<h3>🟢 Berpotensi naik</h3><div class="nm">Tanggal</div>${li(up)}<div class="nm" style="margin-top:10px">Saham kandidat (${sUp.length}) — RSI ≤ 30 atau harmonik bullish di/dekat PRZ</div><div class="achips">${chips(sUp)}</div>`;
+  $('as-dn').innerHTML=`<h3>🔴 Berpotensi turun</h3><div class="nm">Tanggal</div>${li(dn)}<div class="nm" style="margin-top:10px">Saham waspada (${sDn.length}) — RSI ≥ 70 atau harmonik bearish di/dekat PRZ</div><div class="achips">${chips(sDn)}</div>`;
+  // uji cepat aturan bulan pada data yang ada
+  let bt='';
+  if(idx.length>20){const d0=idx[0].d,d1=idx.at(-1).d,pos=Object.fromEntries(idx.map((x,i)=>[x.d,i]));
+    const ev=moonPhases(Date.parse(d0+'T00:00:00Z'),Date.parse(d1+'T00:00:00Z')),res={baru:[],purnama:[]};
+    ev.forEach(e=>{let d=wibDay(e.ms),g=0;while(!(d in pos)&&g<5){d=addDays(d,1);g++;}const i=pos[d];if(i!=null&&i+3<idx.length)res[e.t].push(idx[i+3].v/idx[i].v-1);});
+    let all=[];for(let i=0;i+3<idx.length;i++)all.push(idx[i+3].v/idx[i].v-1);
+    const av=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length*100:NaN,pc=x=>(x>0?'+':'')+fmt(x,2)+'%';
+    bt=`Uji cepat pada data ${idx.length} hari bursa terakhir (indeks proksi dari saham likuid): rata-rata perubahan 3 hari setelah <b>bulan baru</b> ${pc(av(res.baru))} (n=${res.baru.length}), setelah <b>purnama</b> ${pc(av(res.purnama))} (n=${res.purnama.length}), semua hari ${pc(av(all))}. Contoh sampel ini sangat kecil, jadi belum bisa dijadikan bukti.`;}
+  $('as-note').innerHTML=`<b>Yang valid:</b> fase bulan dihitung dengan rumus astronomi (cocok dengan tanggal gerhana NASA), gerhana dari NASA, retrograde Merkurius dari almanac (±1 hari).<br><b>Yang belum terbukti:</b> hubungan tanggal-tanggal itu dengan arah pasar. Itu kepercayaan astro-finance, bukan hukum pasar. Aturan yang dipakai: bulan baru = bias naik, purnama = bias turun, mulai retrograde = turun, akhir retrograde = naik, gerhana dan Fibonacci waktu = rawan berbalik arah dari tren sekarang (${revTxt}).<br>${fibTxt}<br>${bt}<br><span class="nm">Ini bukan kalender resmi Astronacci (milik mereka, tidak tersedia publik). Hari libur bursa tidak diperhitungkan di hitungan Fibonacci waktu.</span>`;}
+$('as-win')&&$('as-win').addEventListener('input',renderAstro);
+
 /* ======================= FUNDAMENTAL ======================= */
 const DEMO_FUND=`Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap
 BBCA,Bank Central Asia,Keuangan,9500,21,4.4,21,2.9,0,1170
@@ -804,7 +886,7 @@ async function loadAuto(){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
       for(let i=a.length-1;i>=0;i--)if(a[i]!=null){lastClose[k]=a[i];break;}}
     if(rows.length){PRC=rows;VAL=P.value5d||null;prcDemo=false;
-      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();renderHarm();}
+      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();renderHarm();try{renderAstro()}catch(e){}}
   }
   if(F&&F.data&&Object.keys(F.data).length&&Object.keys(lastClose).length){
     const rows=[];for(const k in F.data){const f=F.data[k],h=lastClose[k];if(!h)continue;
