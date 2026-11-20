@@ -192,7 +192,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
 </section>
 
 <section class="pane" id="p-akum">
-  <div class="banner" id="b-akum"><b>Data demo.</b> Kode saham & broker di sini fiktif, hanya untuk mencoba. Impor <b>broker summary harian</b> Anda (dari aplikasi sekuritas) untuk hasil nyata.</div>
+  <div class="banner" id="b-akum"><b>Menunggu data broker.</b> Data broker summary akan muncul di sini secara otomatis setelah jembatan Cloudflare aktif. Tidak perlu impor apa pun.</div>
   <div class="seg" id="a-seg"><button data-am="all" class="on">👥 Semua broker</button><button data-am="pick">🎯 Broker tertentu</button></div>
   <div class="box" id="a-pickbox" style="display:none">
     <h3>Pilih broker yang dipantau</h3>
@@ -216,14 +216,14 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
     </div>
     <label class="chk"><input type="checkbox" id="a-hist"> Tampilkan juga akumulasi yang sudah berhenti</label>
   </div>
-  <div class="meta"><span id="a-res"></span><button class="pri" data-imp="broker">Impor Broker Summary</button></div>
+  <div class="meta"><span id="a-res"></span></div>
   <div id="a-bsum"></div>
   <div id="a-list"></div>
 </section>
 
 <!-- ================= RSI ================= -->
 <section class="pane" id="p-rsi">
-  <div class="banner" id="b-rsi"><b>Data demo.</b> Harga di sini fiktif. Impor <b>harga penutupan harian</b> (minimal ±30 hari per saham) untuk menghitung RSI nyata.</div>
+  <div class="banner" id="b-rsi"><b>Memuat data…</b> Harga diambil otomatis setiap hari bursa. Jika pesan ini tidak hilang, muat ulang halaman.</div>
   <div class="box">
     <h3>Kriteria RSI</h3>
     <div class="fgrid">
@@ -234,13 +234,13 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
       <div class="f"><label>Cari saham</label><input id="r-q" type="search" placeholder="Kode…"></div>
     </div>
   </div>
-  <div class="meta"><span id="r-res"></span><button class="pri" data-imp="price">Impor Harga</button></div>
+  <div class="meta"><span id="r-res"></span></div>
   <div id="r-list"></div>
 </section>
 
 <!-- ================= FUNDAMENTAL ================= -->
 <section class="pane" id="p-fund">
-  <div class="banner" id="b-fund"><b>Data contoh.</b> Angka hanya ilustrasi, <u>bukan</u> data pasar terkini. Impor data fundamental terbaru Anda.</div>
+  <div class="banner" id="b-fund"><b>Memuat data…</b> Data fundamental diambil otomatis. Jika pesan ini tidak hilang, muat ulang halaman.</div>
   <div class="row" style="margin-bottom:6px">
     <input type="search" id="q" placeholder="Cari kode / nama…">
     <select id="sektor"><option value="">Semua sektor</option></select>
@@ -258,7 +258,6 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
         <option value="score">Urut: Skor</option><option value="per">PER terendah</option><option value="pbv">PBV terendah</option>
         <option value="roe">ROE tertinggi</option><option value="dy">Dividen tertinggi</option><option value="mcap">Market cap terbesar</option><option value="mos">Margin of safety</option>
       </select>
-      <button class="pri" data-imp="fund">Impor</button>
     </div>
   </div>
   <div id="list"></div>
@@ -382,7 +381,12 @@ function addBroker(raw){raw=String(raw||'').trim();if(!raw)return false;
   if(!AK_PICK.includes(c))AK_PICK.push(c);AK_MODE='pick';saveAk();$('a-bk').value='';renderAkum();return true;}
 function removeBroker(c){AK_PICK=AK_PICK.filter(x=>x!==c);saveAk();renderAkum();}
 function brokerChip(c,cls,extra){return `<button class="bchip ${cls}" data-bk="${esc(c)}">${esc(c)}${bname(c)?` <small>${esc(bname(c))}</small>`:''}${extra||''}</button>`;}
-function renderAkum(){if(!BRK)return;const all=analyzeAkum(),lbl=$('a-mode').value==='net'?'net buy':'beli',q=$('a-q').value.trim().toUpperCase();
+function renderAkum(){if(!BRK){
+    $('a-res').textContent='';$('a-top').innerHTML='<span class="nm">Belum ada data broker.</span>';$('a-bsum').innerHTML='';$('a-bksug').innerHTML='';
+    $('a-bkchips').innerHTML=AK_PICK.length?AK_PICK.map(c=>brokerChip(c,'',' ✕')).join(''):'<span class="nm">Belum ada broker dipilih.</span>';
+    document.querySelectorAll('#a-seg button').forEach(b=>b.classList.toggle('on',b.dataset.am===AK_MODE));
+    $('a-pickbox').style.display=AK_MODE==='pick'?'':'none';$('a-topbox').style.display=AK_MODE==='pick'?'none':'';
+    $('a-list').innerHTML='<div class="empty">⏳ Data broker summary belum tersedia.<br>Akan terisi otomatis setiap hari bursa setelah jembatan Cloudflare aktif.</div>';return;}const all=analyzeAkum(),lbl=$('a-mode').value==='net'?'net buy':'beli',q=$('a-q').value.trim().toUpperCase();
   const pick=AK_MODE==='pick';
   document.querySelectorAll('#a-seg button').forEach(b=>b.classList.toggle('on',b.dataset.am===AK_MODE));
   $('a-pickbox').style.display=pick?'':'none';$('a-topbox').style.display=pick?'none':'';
@@ -613,9 +617,9 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelect
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
-for(const t of ['broker','price','fund']){const H=HELP[t],sv=load(H.key);
-  if(t==='broker'){$('m-help').innerHTML=H.h;$('m-unit').value=load(H.key+'_u')||'1';}
-  try{sv?setDS(t,sv,false):setDS(t,H.demo(),true)}catch(e){if(t==='broker')$('m-unit').value='1';setDS(t,H.demo(),true)}}
+try{['idx_brk','idx_brk_u','idx_prc','idx_scr'].forEach(k=>localStorage.removeItem(k))}catch(e){}
+renderAkum();
+banner('price','demo');banner('fund','demo');
 const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.click();
 
 /* ======================= DATA OTOMATIS (diperbarui robot GitHub tiap hari bursa) ======================= */
