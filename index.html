@@ -549,6 +549,7 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
 
 <section class="pane" id="p-news">
   <div class="box"><h3>Berita pasar terbaru</h3>
+    <div class="seg" id="n-cat" style="margin-bottom:8px"><button data-nc="id" class="on">🇮🇩 Saham Indonesia</button><button data-nc="us">🇺🇸 Saham Amerika</button><button data-nc="gl">🌐 Global Market</button><button data-nc="cr">₿ Crypto</button></div>
     <div class="seg" id="n-seg"><button data-nf="all" class="on">Semua</button><button data-nf="b">🟢 Baik</button><button data-nf="k">🔴 Buruk</button><button data-nf="n">⚪ Netral</button></div>
     <input id="n-q" placeholder="Cari kata / kode saham, mis. BBCA" style="width:100%;margin-bottom:8px">
     <div class="nm" id="n-stat" style="line-height:1.55">Memuat…</div></div>
@@ -1259,8 +1260,8 @@ setStyle(document.documentElement.getAttribute('data-style')||'futur');
   document.addEventListener('pointerleave',()=>{if(cur){cur.style.removeProperty('--rx');cur.style.removeProperty('--ry');cur=null;}},true);})();
 /* ===== Berita ===== */
 const NEWS_URL='https://snowy-cake-3209.ach-hafidzi123.workers.dev/?berita=1';
-const NW_POS=['naik','menguat','melonjak','meroket','melesat','menanjak','rekor tertinggi','laba naik','laba melonjak','untung','surplus','tumbuh','pertumbuhan','positif','optimis','optimistis','net buy','akumulasi','dividen','buyback','pulih','rebound','menghijau','cetak laba','kinerja moncer','moncer','investasi masuk','upgrade','diborong','ekspansi','kontrak baru','lampaui target','kenaikan','reli','cerah','stimulus','pemangkasan bunga','suku bunga turun','menguat tipis','ditutup naik','dibuka naik','capai rekor'];
-const NW_NEG=['turun','melemah','anjlok','jeblok','ambles','merosot','terjun','tertekan','koreksi','rugi','merugi','defisit','negatif','pesimis','pesimistis','net sell','distribusi','suspensi','disuspensi','delisting','gagal bayar','pailit','pkpu','kebangkrutan','korupsi','sanksi','denda','phk','krisis','resesi','inflasi tinggi','menukik','memerah','dilepas','aksi jual','jual bersih','downgrade','terburuk','kejatuhan','tekanan jual','ditutup turun','dibuka turun','bunga naik','suku bunga naik','waswas','cemas','ancaman','bencana','tersungkur','gugatan','sengketa','penipuan','dihentikan','ditutup melemah','dibuka melemah','penurunan','kebakaran','longsor','default','arb','auto reject bawah','capai terendah'];
+const NW_POS=[' surge',' soar',' rally',' rallies',' jump',' climb',' gains',' gain ',' rises',' rose ',' record high','all-time high',' beat ',' beats ',' bullish',' upgrade',' rebound',' recover',' higher',' profit',' growth',' approve',' breakout',' boost',' strong ',' optimis','naik','menguat','melonjak','meroket','melesat','menanjak','rekor tertinggi','laba naik','laba melonjak','untung','surplus','tumbuh','pertumbuhan','positif','optimis','optimistis','net buy','akumulasi','dividen','buyback','pulih','rebound','menghijau','cetak laba','kinerja moncer','moncer','investasi masuk','upgrade','diborong','ekspansi','kontrak baru','lampaui target','kenaikan','reli','cerah','stimulus','pemangkasan bunga','suku bunga turun','menguat tipis','ditutup naik','dibuka naik','capai rekor'];
+const NW_NEG=[' plunge',' tumble',' slump',' sink',' crash',' falls',' fell ',' drops',' dropped',' slide',' slides',' losses',' loss ',' bearish',' downgrade',' lower ',' sell-off','selloff',' fears',' warns',' warning',' ban ',' hack',' exploit',' lawsuit',' bankrupt',' recession',' layoff',' decline',' tumbles',' weak ',' liquidat',' fraud',' probe',' crackdown','turun','melemah','anjlok','jeblok','ambles','merosot','terjun','tertekan','koreksi','rugi','merugi','defisit','negatif','pesimis','pesimistis','net sell','distribusi','suspensi','disuspensi','delisting','gagal bayar','pailit','pkpu','kebangkrutan','korupsi','sanksi','denda','phk','krisis','resesi','inflasi tinggi','menukik','memerah','dilepas','aksi jual','jual bersih','downgrade','terburuk','kejatuhan','tekanan jual','ditutup turun','dibuka turun','bunga naik','suku bunga naik','waswas','cemas','ancaman','bencana','tersungkur','gugatan','sengketa','penipuan','dihentikan','ditutup melemah','dibuka melemah','penurunan','kebakaran','longsor','default','arb','auto reject bawah','capai terendah'];
 function nwScore(t){const x=' '+t.toLowerCase()+' ';let p=0,n=0;
   NW_POS.forEach(w=>{if(x.includes(w))p++});NW_NEG.forEach(w=>{if(x.includes(w))n++});
   /* "menguat tipis/melemah" dsb sudah tercakup; pembalik sederhana */
@@ -1275,8 +1276,8 @@ const NW_TOPIK=[['IHSG',/\bihsg\b|indeks harga saham gabungan/i],['Rupiah / kurs
 function nwRangkum(){const box=$('n-sum');if(!NW.length){box.style.display='none';return;}
   const cnt={b:0,k:0,n:0};NW.forEach(i=>cnt[i.c]++);
   const sig=cnt.b+cnt.k,mood=!sig?'belum jelas (kebanyakan netral)':cnt.b>=cnt.k*1.5?'cenderung positif':cnt.k>=cnt.b*1.5?'cenderung negatif':'campuran';
-  const top=NW_TOPIK.map(([n,re])=>[n,NW.filter(i=>re.test(i.j)).length]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const tk={};NW.forEach(i=>{(i.j.match(/\b[A-Z]{4}\b/g)||[]).forEach(t=>{if(UNIV[t])tk[t]=(tk[t]||0)+1;});});
+  const top=(NW_CATS[NW_CAT].topik||NW_TOPIK).map(([n,re])=>[n,NW.filter(i=>re.test(i.j)).length]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const tk={};if(NW_CAT==='id')NW.forEach(i=>{(i.j.match(/\b[A-Z]{4}\b/g)||[]).forEach(t=>{if(UNIV[t])tk[t]=(tk[t]||0)+1;});});
   const tks=Object.entries(tk).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const h=(c)=>NW.filter(i=>i.c===c).slice(0,3).map(i=>`<li><a href="${esc(i.u)}" target="_blank" rel="noopener" style="color:inherit">${esc(i.j)}</a></li>`).join('');
   box.style.display='block';
@@ -1296,6 +1297,22 @@ function renderNews(){nwRangkum();const q=($('n-q').value||'').trim().toLowerCas
     <div class="nm">${i.c==='b'?'🟢 Berita baik':i.c==='k'?'🔴 Berita buruk':'⚪ Netral'} · ${esc(i.s)} · ${nwAgo(i.t)}</div>
     <div style="font-weight:700;margin:4px 0">${esc(i.j)}</div>${i.r?`<div class="nm" style="line-height:1.5">${esc(i.r)}</div>`:''}</a>`).join(''):`<div class="empty">${NW.length?'Tidak ada berita yang cocok.':'Belum ada berita. Jembatan Cloudflare belum diperbarui atau belum bisa dijangkau.'}</div>`;}
 const NW_FEEDS={"Antara Bursa":["https://www.antaranews.com/rss/ekonomi-bursa.xml"],"Antara Ekonomi":["https://www.antaranews.com/rss/ekonomi.xml"],"CNBC Indonesia":["https://www.cnbcindonesia.com/market/rss"],"Kontan":["https://investasi.kontan.co.id/rss"],"KabarBursa":["https://www.kabarbursa.com/feed.xml"],"CNN Indonesia":["https://www.cnnindonesia.com/ekonomi/rss","https://www.cnnindonesia.com/rss"],"Bisnis":["https://market.bisnis.com/rss","https://www.bisnis.com/rss","https://finansial.bisnis.com/rss"],"Detik Finance":["https://rss.detik.com/index.php/finance","https://finance.detik.com/rss","https://finance.detik.com/rss/bursa-valas"],"GN:IHSG":["https://news.google.com/rss/search?q=IHSG+saham+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Emiten":["https://news.google.com/rss/search?q=emiten+BEI+laba+OR+dividen+OR+IPO+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Rupiah":["https://news.google.com/rss/search?q=rupiah+kurs+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Bunga":["https://news.google.com/rss/search?q=suku+bunga+Bank+Indonesia+OR+The+Fed+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Komoditas":["https://news.google.com/rss/search?q=harga+emas+OR+batu+bara+OR+nikel+OR+CPO+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Ekonomi":["https://news.google.com/rss/search?q=ekonomi+Indonesia+OR+OJK+OR+BEI+when:2d&hl=id&gl=ID&ceid=ID:id"]};
+
+const gnq=(q,l)=>"https://news.google.com/rss/search?q="+encodeURIComponent(q)+(l==='en'?"&hl=en-US&gl=US&ceid=US:en":"&hl=id&gl=ID&ceid=ID:id");
+const CNBC=id=>"https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id="+id;
+const NW_CATS={
+ id:{nama:'Saham Indonesia',feeds:null,topik:null},
+ us:{nama:'Saham Amerika',feeds:{"CNBC Investing":[CNBC(15839069)],"CNBC Finance":[CNBC(10000664)],"CNBC Top News":[CNBC(100003114)],"MarketWatch":["https://feeds.content.dowjones.io/public/rss/mw_topstories"],"MarketWatch Pulse":["https://feeds.content.dowjones.io/public/rss/mw_marketpulse"],"Yahoo Finance":["https://finance.yahoo.com/news/rssindex"],"Seeking Alpha":["https://seekingalpha.com/market_currents.xml"],"Investing.com":["https://www.investing.com/rss/news_25.rss"],"Benzinga":["https://www.benzinga.com/feed"],"Nasdaq":["https://www.nasdaq.com/feed/rssoutbound?category=Markets"],
+  "GN:WallStreet":[gnq('Wall Street stocks S&P 500 Nasdaq Dow when:1d','en')],"GN:Earnings":[gnq('earnings stock shares when:1d','en')],"GN:Fed":[gnq('Federal Reserve rates stocks when:1d','en')],"GN:BigTech":[gnq('Nvidia OR Apple OR Microsoft OR Tesla OR Amazon OR Alphabet stock when:1d','en')],"GN:Reuters":[gnq('site:reuters.com stocks markets when:1d','en')],"GN:Wall Street ID":[gnq('Wall Street saham AS when:2d')],"GN:Nasdaq ID":[gnq('Nasdaq OR "S&P 500" OR "Dow Jones" when:2d')]},
+  topik:[['Indeks utama (S&P/Nasdaq/Dow)',/s&p|nasdaq|dow\b|wall street/i],['The Fed / suku bunga',/\bfed\b|federal reserve|powell|rate cut|rate hike|suku bunga|inflation|inflasi|\bcpi\b/i],['Earnings / laporan keuangan',/earnings|revenue|profit|guidance|laba|pendapatan/i],['Big Tech / AI',/nvidia|apple|microsoft|tesla|amazon|alphabet|google|meta\b|\bai\b|openai/i],['Tarif / politik',/tariff|tarif|trump|china|tiongkok/i],['Minyak & emas',/oil|crude|gold|minyak|emas/i],['Obligasi / dolar',/treasury|yield|bond|dollar|dolar|obligasi/i]]},
+ gl:{nama:'Global Market',feeds:{"BBC Business":["http://feeds.bbci.co.uk/news/business/rss.xml"],"Guardian Business":["https://www.theguardian.com/uk/business/rss"],"CNBC World":[CNBC(100727362)],"CNBC Top News":[CNBC(100003114)],"Al Jazeera":["https://www.aljazeera.com/xml/rss/all.xml"],"DW Business":["https://rss.dw.com/rdf/rss-en-bus"],"Nikkei Asia":["https://asia.nikkei.com/rss/feed/nar"],"SCMP Business":["https://www.scmp.com/rss/92/feed"],"Economic Times":["https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms"],"Investing Forex":["https://www.investing.com/rss/news_1.rss"],"Investing Komoditas":["https://www.investing.com/rss/news_11.rss"],"Investing Ekonomi":["https://www.investing.com/rss/news_95.rss"],"Kontan Internasional":["https://internasional.kontan.co.id/rss"],
+  "GN:Global":[gnq('global markets stocks oil gold dollar when:1d','en')],"GN:BankSentral":[gnq('ECB OR BOJ OR PBOC OR "Bank of England" central bank rates when:1d','en')],"GN:Oil":[gnq('oil prices OPEC Brent when:1d','en')],"GN:Gold":[gnq('gold price when:1d','en')],"GN:Asia":[gnq('Asian markets Nikkei Hang Seng Shanghai when:1d','en')],"GN:Pasar Global":[gnq('pasar global bursa Asia Eropa when:2d')],"GN:Minyak Emas":[gnq('harga minyak dunia OR harga emas dunia when:2d')],"GN:Dolar":[gnq('dolar AS yuan yen euro kurs global when:2d')]},
+  topik:[['Bank sentral & suku bunga',/central bank|\bfed\b|ecb|boj|pboc|bank sentral|suku bunga|interest rate/i],['Minyak / OPEC',/oil|opec|brent|crude|minyak/i],['Emas',/gold|emas/i],['China / Asia',/china|tiongkok|nikkei|hang seng|asia|japan|jepang/i],['Eropa / Inggris',/europe|eropa|ecb|uk\b|britain|inggris|euro\b/i],['Perang dagang / geopolitik',/tariff|tarif|trade war|sanction|sanksi|war\b|perang|geopolit/i],['Inflasi / resesi',/inflation|inflasi|recession|resesi|gdp|pdb/i],['Mata uang',/dollar|dolar|yuan|yen|euro|currency|kurs/i]]},
+ cr:{nama:'Crypto',feeds:{"CoinDesk":["https://www.coindesk.com/arc/outboundfeeds/rss/"],"Cointelegraph":["https://cointelegraph.com/rss"],"Decrypt":["https://decrypt.co/feed"],"The Block":["https://www.theblock.co/rss.xml"],"Bitcoin Magazine":["https://bitcoinmagazine.com/.rss/full/"],"CryptoSlate":["https://cryptoslate.com/feed/"],"CryptoNews":["https://cryptonews.com/news/feed/"],"Bitcoinist":["https://bitcoinist.com/feed/"],"NewsBTC":["https://www.newsbtc.com/feed/"],"U.Today":["https://u.today/rss"],"Coinvestasi":["https://coinvestasi.com/feed"],
+  "GN:Bitcoin":[gnq('bitcoin price when:1d','en')],"GN:Altcoin":[gnq('ethereum OR solana OR XRP OR dogecoin when:1d','en')],"GN:Regulasi":[gnq('crypto ETF SEC regulation when:2d','en')],"GN:DeFi":[gnq('stablecoin OR DeFi OR exchange hack crypto when:2d','en')],"GN:Kripto ID":[gnq('kripto bitcoin harga when:1d')],"GN:Aset Kripto":[gnq('aset kripto OJK OR Indodax OR Tokocrypto OR Pintu when:3d')]},
+  topik:[['Bitcoin',/bitcoin|\bbtc\b/i],['Ethereum / altcoin',/ethereum|\beth\b|solana|\bsol\b|xrp|doge|altcoin|bnb|cardano/i],['ETF / institusi',/\betf\b|blackrock|institution|institusi|treasury|microstrategy/i],['Regulasi',/\bsec\b|regulat|regulasi|ojk|bappebti|law|undang|ban\b|larang/i],['Hack / keamanan',/hack|exploit|scam|fraud|theft|stolen|retas|penipuan/i],['Stablecoin / DeFi',/stablecoin|usdt|usdc|defi|tether/i],['Exchange',/binance|coinbase|kraken|okx|bybit|indodax|tokocrypto|pintu/i]]}
+};
+let NW_CAT='id';
 let NW_MODE='worker';
 async function nwFeedOne(n,urls){
   for(const u of urls){
@@ -1305,13 +1322,17 @@ async function nwFeedOne(n,urls){
       if(n.startsWith('GN:'))items.forEach(i=>{const k=i.j.lastIndexOf(' - ');if(k>10){i.s=i.j.slice(k+3);i.j=i.j.slice(0,k);}i.r='';});
       if(items.length)return{nama:n,ok:true,items};}catch(e){}}
   return{nama:n,ok:false,items:[]};}
-async function nwFallback(){
-  const res=await Promise.all(Object.entries(NW_FEEDS).map(([n,u])=>nwFeedOne(n,u)));
+async function nwFallback(feeds){
+  const res=await Promise.all(Object.entries(feeds||NW_FEEDS).map(([n,u])=>nwFeedOne(n,u)));
   const gn=res.filter(h=>h.nama.startsWith('GN:')),oth=res.filter(h=>!h.nama.startsWith('GN:'));
   const sumber=oth.map(h=>({nama:h.nama,ok:h.ok}));if(gn.length)sumber.push({nama:'Google News (agregator banyak media)',ok:gn.some(h=>h.ok)});
   const seen=new Set(),items=[];res.flatMap(h=>h.items).sort((a,b)=>b.t-a.t).forEach(i=>{const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push(i);});
-  return{sumber,items:items.slice(0,250)};}
-async function loadNews(){let j=null;
+  return{sumber,items:items.slice(0,400)};}
+async function loadNews(){let j=null;const cat=NW_CAT;
+  if(cat!=='id'){NW_MODE='cadangan';try{j=await nwFallback(NW_CATS[cat].feeds);}catch(e){}
+    if(cat!==NW_CAT)return;
+    if(!j||!j.items.length){if(!NW.length)$('n-stat').innerHTML='<span class="r">Belum bisa mengambil berita dari sumber mana pun. Coba lagi sebentar lagi.</span>';return;}
+    NW_ST=j.sumber||[];NW=j.items.map(i=>({...i,c:nwKls(i.j+' '+(i.r||''))}));renderNews();return;}
   try{const r=await fetch(NEWS_URL,{cache:'no-store'});if(r.ok){const x=await r.json();if(x&&Array.isArray(x.items)&&x.items.length)j=x;}}catch(e){}
   NW_MODE=j?'worker':'cadangan';
   if(!j){try{j=await nwFallback();}catch(e){}}
@@ -1388,6 +1409,7 @@ function liveTimer(){clearInterval(LV_T);clearInterval(LV_C);const t=document.qu
   if(t!=='ki'&&t!=='ipo')return;const f=t==='ki'?loadKi:loadIpo;f();
   LV_T=setInterval(()=>{if(!document.hidden)f();},60000);LV_C=setInterval(liveTick,1000);liveTick();}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)liveTimer();});
+document.querySelectorAll('#n-cat button').forEach(b=>b.onclick=()=>{if(NW_CAT===b.dataset.nc)return;NW_CAT=b.dataset.nc;document.querySelectorAll('#n-cat button').forEach(x=>x.classList.toggle('on',x===b));NW=[];NW_ST=null;$('n-list').innerHTML='';$('n-stat').textContent='Memuat berita '+NW_CATS[NW_CAT].nama+'…';$('n-sum').style.display='none';newsTimer();});
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
