@@ -383,6 +383,19 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 :root[data-style="futur"] header{border-image:linear-gradient(90deg,#0284c7,#38bdf8,#bae6fd) 1}
 :root[data-style="futur"] .box{border-left-color:#38bdf8}
 a.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--ac);color:#fff!important;font-weight:700;font-size:13px;text-decoration:none}
+/* ---- Perbaikan tampilan HP ---- */
+html,body{max-width:100%;overflow-x:hidden}
+@media(max-width:700px){
+nav.tabs{display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%;padding:0 10px;gap:2px;border-bottom:1px solid var(--bd)}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs .tab{flex:0 0 auto;padding:10px 12px;font-size:13.5px}
+.pane,.box,.card,.row,.fgrid,.agrid{min-width:0;max-width:100%;box-sizing:border-box}
+input,select,textarea{max-width:100%;min-width:0;box-sizing:border-box}
+.fgrid{grid-template-columns:1fr 1fr!important}
+header h1{font-size:19px;line-height:1.2}
+table{display:block;overflow-x:auto;max-width:100%}
+img,svg{max-width:100%}
+}
 </style>
 </head>
 <body>
