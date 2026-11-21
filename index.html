@@ -787,10 +787,10 @@ const HST={done:'Titik D sudah terbentuk dan harga mulai berbalik.',zone:'Harga 
 function zigzag(cl,th){const P=[];let dir=0,hi={i:0,p:cl[0]},lo={i:0,p:cl[0]};
   for(let i=1;i<cl.length;i++){const p=cl[i];
     if(dir===0){if(p>hi.p)hi={i,p};if(p<lo.p)lo={i,p};
-      if(p>=lo.p*(1+th)){P.push({i:lo.i,p:lo.p,t:'L'});dir=1;hi={i,p};}
-      else if(p<=hi.p*(1-th)){P.push({i:hi.i,p:hi.p,t:'H'});dir=-1;lo={i,p};}}
-    else if(dir===1){if(p>hi.p)hi={i,p};else if(p<=hi.p*(1-th)){P.push({i:hi.i,p:hi.p,t:'H'});dir=-1;lo={i,p};}}
-    else{if(p<lo.p)lo={i,p};else if(p>=lo.p*(1+th)){P.push({i:lo.i,p:lo.p,t:'L'});dir=1;hi={i,p};}}}
+      if(p>=lo.p*(1+th)){P.push({i:lo.i,p:lo.p,t:'L',c:i});dir=1;hi={i,p};}
+      else if(p<=hi.p*(1-th)){P.push({i:hi.i,p:hi.p,t:'H',c:i});dir=-1;lo={i,p};}}
+    else if(dir===1){if(p>hi.p)hi={i,p};else if(p<=hi.p*(1-th)){P.push({i:hi.i,p:hi.p,t:'H',c:i});dir=-1;lo={i,p};}}
+    else{if(p<lo.p)lo={i,p};else if(p>=lo.p*(1+th)){P.push({i:lo.i,p:lo.p,t:'L',c:i});dir=1;hi={i,p};}}}
   return{P,dir,ex:dir===1?hi:dir===-1?lo:null};}
 const hIn=(r,lo,hi,t)=>r>=lo*(1-t)&&r<=hi*(1+t);
 const hMid=a=>(a[0]+a[1])/2;
@@ -840,13 +840,34 @@ function harmSvg(r,L){const pts=r.pts,lab=r.n==='Three Drives'?['0','1','2','3',
   const tail=r.st==='done'||last.i<L-1?`<path d="M${X(last.i).toFixed(1)},${Y(last.p).toFixed(1)} L${X(L-1).toFixed(1)},${Y(r.now).toFixed(1)}" stroke="var(--mut)" stroke-dasharray="2 2" fill="none"/>`:'';
   const tx=pts.map((x,k)=>`<text x="${X(x.i).toFixed(1)}" y="${(Y(x.p)+(x.t==='H'||(k<pts.length-1&&pts[k+1].p<x.p)?-2:8)).toFixed(1)}" font-size="7" text-anchor="middle" fill="var(--tx)">${lab[k]||''}</text>`).join('');
   return `<svg class="hsv" viewBox="0 0 100 54" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="var(--bl)" stroke-width="1.4"/>${tail}${tx}</svg>`;}
+
+/* ---- Backtest peluang berhasil ---- */
+const BT_H=10,BT_X=0.03;let BT=null,BT_KEY='',BT_SRC=null;
+function hBacktest(o){
+  const key=[o.zz,o.tol].join('|');if(BT&&BT_KEY===key&&BT_SRC===HC)return BT;
+  const R={};const add=(n,bull,w,l,u)=>{for(const k of [n+'|'+bull,'*|'+bull,'*|*']){const r=R[k]||(R[k]={w:0,l:0,u:0});r.w+=w;r.l+=l;r.u+=u;}};
+  for(const k in HC){const cl=HC[k];if(cl.length<40)continue;const {P}=zigzag(cl,o.zz);
+    for(const sp of HP){const np=sp.td?5:sp.abcd?3:4;
+      for(let j=np;j<P.length;j++){const w=P.slice(j-np,j+1),D=w[np],f=hFit(sp,w.slice(0,np).map(x=>x.p),o.tol);
+        if(!f||!(f.bull?D.t==='L':D.t==='H')||D.p<f.prz[0]*(1-o.tol/2)||D.p>f.prz[1]*(1+o.tol/2))continue;
+        const e=D.c;if(e+BT_H>=cl.length)continue;const p0=cl[e];let res=0;
+        for(let q=e+1;q<=e+BT_H;q++){const ch=(cl[q]/p0-1)*(f.bull?1:-1);if(ch>=BT_X){res=1;break;}if(ch<=-BT_X){res=-1;break;}}
+        add(sp.n,f.bull,res>0?1:0,res<0?1:0,res===0?1:0);}}}
+  BT=R;BT_KEY=key;BT_SRC=HC;return R;}
+function hPeluang(r,R){
+  const g=R[r.n+'|'+r.bull],a=R['*|'+r.bull];let use=g,lab=r.n;
+  if(!use||use.w+use.l<10){use=a;lab='semua pola '+(r.bull?'bullish':'bearish');}
+  if(!use||use.w+use.l<1)return '<div class="rr"><small>Peluang historis</small><b>n/a</b></div>';
+  const dec=use.w+use.l,pc=Math.round(use.w/dec*100),n=dec+use.u;
+  return `<div class="rr"><small>Peluang historis</small><b class="${pc>=55?'g':pc<45?'r':''}">${pc}%</b></div>
+   <div class="nm" style="font-size:11px;line-height:1.45">Dari ${n} kasus lampau ${esc(lab)}: ${use.w} naik/turun ≥${BT_X*100}% sesuai arah, ${use.l} berbalik ≥${BT_X*100}%, ${use.u} datar, dalam ${BT_H} hari bursa.${n<30?' <b>Sampel sedikit, jangan jadi patokan.</b>':''}</div>`;}
 let HC=null,HCsrc=null;
 function renderHarm(){if(!PRC||!$('h-list'))return;
   if(HCsrc!==PRC){const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));HC={};
     for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1);HC[k]=a.map(x=>x[1]);}HCsrc=PRC;}
   const o={zz:(num($('h-zz').value)||6)/100,tol:(num($('h-tol').value)||8)/100,prox:(num($('h-prox').value)||3)/100,days:parseInt($('h-days').value)||10,pat:$('h-pat').value};
   const minVal=(num($('h-val').value)||0)*1e9,q=$('h-q').value.trim().toUpperCase(),dirF=$('h-dir').value,stF=$('h-st').value;
-  let res=[];
+  let res=[];const BTR=hBacktest(o);
   for(const k in HC){if(q&&!k.includes(q))continue;if(VAL&&minVal>0&&k in VAL&&VAL[k]<minVal)continue;
     const cl=HC[k];if(cl.length<40)continue;
     for(const r of harmScan(cl,o)){if(dirF==='bull'&&!r.bull||dirF==='bear'&&r.bull)continue;
@@ -860,6 +881,7 @@ function renderHarm(){if(!PRC||!$('h-list'))return;
     <div class="rr"><small>Harga kini</small><b>Rp ${fmt(r.now,0)}</b></div>
     <div class="rr"><small>Zona PRZ (D)</small><b>${fmt(r.prz[0],0)} – ${fmt(r.prz[1],0)}</b></div>
     <div class="rr"><small>Kecocokan</small><b>${Math.round(r.sk*100)}%</b></div>
+    ${hPeluang(r,BTR)}
     ${VAL&&isFinite(VAL[r.k])?`<div class="rr"><small>Nilai 5h</small><b>Rp ${rupiah(VAL[r.k])}</b></div>`:''}</div>`).join('')
     :`<div class="empty">Belum ada saham yang cocok. Coba perbesar toleransi, kecilkan ayunan zigzag, atau ubah filter.</div>`;}
 ['h-zz','h-tol','h-prox','h-days','h-val','h-q','h-pat','h-dir','h-st'].forEach(id=>$(id)&&$(id).addEventListener('input',renderHarm));
