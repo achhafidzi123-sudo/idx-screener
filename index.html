@@ -397,6 +397,7 @@ header h1{font-size:19px;line-height:1.2}
 table{display:block;overflow-x:auto;max-width:100%}
 img,svg{max-width:100%}
 }
+header{position:relative!important;top:auto!important}
 </style>
 </head>
 <body>
@@ -1218,6 +1219,8 @@ $('demo').onclick=()=>{store(HELP[cur].key,null);const u=$('m-unit');if(u)u.valu
 function placeTabs(){const n=document.getElementById('tabs'),h=document.querySelector('header');
   if(matchMedia('(min-width:900px)').matches){if(n.parentNode===h)h.after(n);}else if(n.parentNode!==h)h.appendChild(n);}
 placeTabs();addEventListener('resize',placeTabs);
+function navTop(){const n=$('tabs'),h=document.querySelector('header');if(!matchMedia('(min-width:900px)').matches){n.style.top='';return;}n.style.top=Math.max(12,Math.round(h.getBoundingClientRect().bottom)+14)+'px';}
+addEventListener('scroll',navTop,{passive:true});addEventListener('resize',navTop);navTop();
 
 
 /* ===== Tema gelap/terang ===== */
