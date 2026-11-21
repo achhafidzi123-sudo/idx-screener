@@ -203,6 +203,7 @@ table.bst{width:100%;border-collapse:collapse;font-size:12.5px}
 .bst th:first-child,.bst td:first-child{text-align:left;width:18px}
 .rsif{display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(0,150,224,.1);border:1px solid var(--bd);flex-wrap:wrap}
 footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-size:11.5px;padding:10px 14px 40px}
+.tab[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -214,7 +215,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
 </header>
 <nav class="tabs" id="tabs">
     <button class="tab on" data-t="cari">🔍 Cari</button>
-    <button class="tab" data-t="akum">🏦 Akumulasi</button>
+    <button class="tab" data-t="akum" id="tab-akum" hidden>🏦 Akumulasi</button>
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
     <button class="tab" data-t="harm">🔷 Harmonik</button>
     <button class="tab" data-t="astro">🌙 Astronacci</button>
@@ -894,7 +895,7 @@ buildFilters();drawChips();
 try{['idx_brk','idx_brk_u','idx_prc','idx_scr'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 renderAkum();
 banner('price','demo');banner('fund','demo');
-const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.click();
+const lt=load('idx_tab');if(lt&&lt!=='akum')document.querySelector(`.tab[data-t="${lt}"]`)?.click();
 
 /* ======================= DATA OTOMATIS (diperbarui robot GitHub tiap hari bursa) ======================= */
 async function getJSON(u){try{const r=await fetch(u+'?v='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
@@ -902,6 +903,7 @@ async function loadAuto(){
   const [P,F,B,U]=await Promise.all([getJSON('data/prices.json'),getJSON('data/fundamentals.json'),getJSON('data/broker.json'),getJSON('data/universe.json')]);
   if(U&&U.tickers)UNIV=U.tickers;
   BS_INDEX=await getJSON('data/bs/index.json');
+  {const tb=document.getElementById('tab-akum');if(tb)tb.hidden=!((B&&(B.length||(B.rows||[]).length))||(BS_INDEX&&(BS_INDEX.days||[]).length));}
   let lastClose={};
   if(P&&P.dates&&P.dates.length&&P.close){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
