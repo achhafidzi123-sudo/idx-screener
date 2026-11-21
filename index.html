@@ -382,6 +382,7 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 :root[data-style="futur"] .card::before{background:linear-gradient(90deg,#0284c7,#38bdf8,#7dd3fc)}
 :root[data-style="futur"] header{border-image:linear-gradient(90deg,#0284c7,#38bdf8,#bae6fd) 1}
 :root[data-style="futur"] .box{border-left-color:#38bdf8}
+a.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--ac);color:#fff!important;font-weight:700;font-size:13px;text-decoration:none}
 </style>
 </head>
 <body>
@@ -400,6 +401,7 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
     <button class="tab" data-t="harm">🔷 Harmonik</button>
     <button class="tab" data-t="astro">🌙 Astronacci</button>
     <button class="tab" data-t="news">📰 Berita</button>
+    <button class="tab" data-t="ipo">🚀 IPO</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -499,6 +501,18 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
     <div class="nm" id="n-stat" style="line-height:1.55">Memuat…</div></div>
   <div class="box" id="n-sum" style="display:none"></div>
   <div id="n-list"></div>
+</section>
+
+<section class="pane" id="p-ipo">
+  <div class="box"><h3>Saham yang akan IPO</h3>
+    <div class="nm" style="line-height:1.6">Daftar di bawah diambil otomatis dari berita IPO terbaru. Prospektus resmi dan jadwal lengkap ada di situs resmi berikut:</div>
+    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">
+      <a class="btn" href="https://e-ipo.co.id" target="_blank" rel="noopener">🚀 e-IPO (pemesanan &amp; prospektus)</a>
+      <a class="btn" href="https://www.idx.co.id" target="_blank" rel="noopener">🏛️ IDX (calon emiten &amp; prospektus)</a>
+      <a class="btn" href="https://www.google.com/search?q=jadwal+IPO+saham+terbaru+prospektus+pdf" target="_blank" rel="noopener">🔎 Cari semua prospektus</a>
+    </div>
+    <div class="nm" id="ip-stat" style="margin-top:10px;line-height:1.55">Memuat…</div></div>
+  <div id="ip-list"></div>
 </section>
 
 <section class="pane" id="p-astro">
@@ -1172,10 +1186,34 @@ async function loadNews(){let j=null;
   if(!j||!j.items.length){if(!NW.length)$('n-stat').innerHTML='<span class="r">Belum bisa mengambil berita dari sumber mana pun. Coba lagi sebentar lagi.</span>';return;}
   NW_ST=j.sumber||[];NW=j.items.map(i=>({...i,c:nwKls(i.j+' '+(i.r||''))}));renderNews();}
 function newsTimer(){clearInterval(NW_T);if(document.querySelector('.tab.on')?.dataset.t==='news'){loadNews();NW_T=setInterval(()=>{if(!document.hidden)loadNews()},NW_MODE==='worker'?60000:120000);}}
+
+/* ---- IPO ---- */
+const IPO_FEEDS=["https://news.google.com/rss/search?q=IPO+saham+penawaran+umum+perdana+when:14d&hl=id&gl=ID&ceid=ID:id","https://news.google.com/rss/search?q=calon+emiten+prospektus+OR+bookbuilding+OR+%22masa+penawaran%22+when:14d&hl=id&gl=ID&ceid=ID:id","https://news.google.com/rss/search?q=pencatatan+perdana+saham+BEI+when:14d&hl=id&gl=ID&ceid=ID:id"];
+let IPO_DONE=false;
+async function loadIpo(){
+  if(IPO_DONE)return;
+  const res=await Promise.all(IPO_FEEDS.map(u=>nwFeedOne('GN:ipo',[u])));
+  const seen=new Set(),items=[];
+  res.flatMap(h=>h.items).sort((a,b)=>b.t-a.t).forEach(i=>{
+    if(!/\bipo\b|penawaran umum|bookbuilding|book building|prospektus|pencatatan perdana|calon emiten|go public/i.test(i.j))return;
+    const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push(i);});
+  if(!items.length){$('ip-stat').innerHTML='<span class="r">Belum bisa mengambil berita IPO. Gunakan tombol e-IPO / IDX di atas.</span>';return;}
+  IPO_DONE=true;
+  $('ip-stat').innerHTML=items.length+' berita IPO terbaru (14 hari terakhir). <span class="nm">Nama perusahaan, harga &amp; jadwal diambil dari judul berita dan bisa tidak lengkap; cek prospektus resmi sebelum memesan. Bukan saran investasi.</span>';
+  $('ip-list').innerHTML=items.map(i=>{
+    const m=i.j.match(/PT\s[^,:;()|]{3,40}?\sTbk|\(([A-Z]{4})\)/);
+    const nama=m?m[0].replace(/^\(|\)$/g,''):i.j.split(/\s+/).slice(0,6).join(' ');
+    const q=encodeURIComponent('prospektus IPO '+nama+' filetype:pdf');
+    return `<div class="box" style="border-left:4px solid var(--bl)">
+      <div class="nm">🚀 ${esc(i.s)} · ${nwAgo(i.t)}</div>
+      <a href="${esc(i.u)}" target="_blank" rel="noopener" style="display:block;font-weight:700;margin:4px 0;text-decoration:none;color:inherit">${esc(i.j)}</a>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">
+        <a class="btn" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">📄 Prospektus</a>
+        <a class="btn" href="https://e-ipo.co.id" target="_blank" rel="noopener">e-IPO</a></div></div>`;}).join('');}
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();if(t.dataset.t==='ipo')loadIpo();});
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
