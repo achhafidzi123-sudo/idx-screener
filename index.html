@@ -311,6 +311,15 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 :root[data-style="futur"] .pane.on{animation:fadeUp .4s ease}
 @media (prefers-reduced-motion:reduce){:root[data-style="futur"] body::before,:root[data-style="futur"] .logo{animation:none}:root[data-style="futur"] .card{transform:none!important}}
 @media (hover:none){:root[data-style="futur"] .card{transform:none!important}:root[data-style="futur"] .card .tk,:root[data-style="futur"] .card .rr b{transform:none}}
+/* ===== Tanpa animasi: tampilan 3D tetap, gerakan dimatikan ===== */
+*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+:root[data-style="futur"] .card{transform:none!important;will-change:auto}
+:root[data-style="futur"] .card::after{display:none}
+:root[data-style="futur"] .card .tk,:root[data-style="futur"] .card .rr b,:root[data-style="futur"] .card .px{transform:none}
+:root[data-style="futur"] .tab:hover{transform:none}
+:root[data-style="futur"] button:active{transform:none}
+:root[data-style="futur"] .logo{transform:rotateY(-10deg) rotateX(6deg)}
+:root[data-style="futur"] body::before{transform:perspective(420px) rotateX(62deg)}
 </style>
 </head>
 <body>
@@ -1020,7 +1029,7 @@ function setStyle(t){document.documentElement.setAttribute('data-style',t);try{l
   const b=$('stylebtn');if(b){b.style.opacity=t==='futur'?'1':'.55';b.title=t==='futur'?'Gaya futuristik 3D aktif (klik untuk minimalis)':'Gaya minimalis aktif (klik untuk futuristik 3D)';}}
 $('stylebtn').onclick=()=>setStyle(document.documentElement.getAttribute('data-style')==='futur'?'minimal':'futur');
 setStyle(document.documentElement.getAttribute('data-style')||'futur');
-(function(){if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;let cur=null;
+(function(){return;let cur=null;
   document.addEventListener('pointermove',e=>{if(document.documentElement.dataset.style!=='futur')return;
     const c=e.target.closest&&e.target.closest('.card');
     if(cur&&cur!==c){cur.style.removeProperty('--rx');cur.style.removeProperty('--ry');}
