@@ -1027,7 +1027,7 @@ function renderCari(){const raw=$('c-q').value.trim(),q=raw.toUpperCase().split(
     <div class="fv">Skor fundamental: <b>${f.score}</b> · Nilai wajar Graham: <b>${isFinite(f.fv)?'Rp '+fmt(f.fv,0):'–'}</b> · MoS: <b class="${f.mos>0?'g':'r'}">${isFinite(f.mos)?fmt(f.mos,0)+'%':'–'}</b></div></div>`;}
   h+=`<div class="card" id="bs-box"></div>`;
   const B=(BRK||[]).filter(r=>r.k===k);
-  h+=`<div class="card"><h3 style="margin:0 0 8px;font-size:14px">Akumulasi broker</h3>`;
+  h+=`<div class="card" ${brkDemo&&!B.length?'style="display:none"':''}><h3 style="margin:0 0 8px;font-size:14px">Akumulasi broker</h3>`;
   if(!B.length)h+=`<div class="nm">${brkDemo?'Data broker belum tersedia: tab Akumulasi masih memakai data demo karena sumber broker belum bisa diakses robot.':'Tidak ada data broker untuk saham ini (saham sepi atau belum terambil).'}</div>`;
   else{const days=[...new Set(B.map(r=>r.d))].sort(),d=days.at(-1),top=B.filter(r=>r.d===d).sort((a,b)=>b.net-a.net).slice(0,5);
     const ak=analyzeAkum().filter(r=>r.k===k&&r.active);
