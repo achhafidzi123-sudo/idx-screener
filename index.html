@@ -368,6 +368,7 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
     <div class="seg" id="n-seg"><button data-nf="all" class="on">Semua</button><button data-nf="b">🟢 Baik</button><button data-nf="k">🔴 Buruk</button><button data-nf="n">⚪ Netral</button></div>
     <input id="n-q" placeholder="Cari kata / kode saham, mis. BBCA" style="width:100%;margin-bottom:8px">
     <div class="nm" id="n-stat" style="line-height:1.55">Memuat…</div></div>
+  <div class="box" id="n-sum" style="display:none"></div>
   <div id="n-list"></div>
 </section>
 
@@ -968,7 +969,24 @@ function nwScore(t){const x=' '+t.toLowerCase()+' ';let p=0,n=0;
 function nwKls(t){const s=nwScore(t);return s>0?'b':s<0?'k':'n';}
 let NW=[],NW_F='all',NW_T=null,NW_ST=null;
 function nwAgo(ms){const d=Math.max(0,(Date.now()-ms)/1000);if(!ms)return'';if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hr lalu';}
-function renderNews(){const q=($('n-q').value||'').trim().toLowerCase();
+
+const NW_TOPIK=[['IHSG',/\bihsg\b|indeks harga saham gabungan/i],['Rupiah / kurs',/rupiah|dolar as|kurs\b/i],['Suku bunga / BI',/suku bunga|bi rate|bank indonesia/i],['The Fed / global',/the fed|fed\b|wall street|tarif|trump/i],['Investor asing',/asing|net buy|net sell/i],['Emas & komoditas',/emas|minyak|batu bara|nikel|cpo|komoditas/i],['Dividen / laba emiten',/dividen|laba|rugi|kinerja|buyback/i],['IPO / aksi korporasi',/\bipo\b|rights issue|akuisisi|merger|suspensi/i],['Perbankan',/bank|bbca|bbri|bmri|bbni/i]];
+function nwRangkum(){const box=$('n-sum');if(!NW.length){box.style.display='none';return;}
+  const cnt={b:0,k:0,n:0};NW.forEach(i=>cnt[i.c]++);
+  const sig=cnt.b+cnt.k,mood=!sig?'belum jelas (kebanyakan netral)':cnt.b>=cnt.k*1.5?'cenderung positif':cnt.k>=cnt.b*1.5?'cenderung negatif':'campuran';
+  const top=NW_TOPIK.map(([n,re])=>[n,NW.filter(i=>re.test(i.j)).length]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const tk={};NW.forEach(i=>{(i.j.match(/\b[A-Z]{4}\b/g)||[]).forEach(t=>{if(UNIV[t])tk[t]=(tk[t]||0)+1;});});
+  const tks=Object.entries(tk).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const h=(c)=>NW.filter(i=>i.c===c).slice(0,3).map(i=>`<li><a href="${esc(i.u)}" target="_blank" rel="noopener" style="color:inherit">${esc(i.j)}</a></li>`).join('');
+  box.style.display='block';
+  box.innerHTML=`<h3>Rangkuman singkat</h3>
+   <div style="line-height:1.6">Dari <b>${NW.length}</b> berita terbaru, suasana pemberitaan <b>${mood}</b> (🟢 ${cnt.b} baik · 🔴 ${cnt.k} buruk · ⚪ ${cnt.n} netral).</div>
+   ${top.length?`<div style="margin-top:8px"><span class="nm">Topik paling sering muncul:</span> ${top.map(x=>`<b>${esc(x[0])}</b> (${x[1]})`).join(' · ')}</div>`:''}
+   ${tks.length?`<div style="margin-top:6px"><span class="nm">Saham yang disebut:</span> ${tks.map(x=>`<b>${esc(x[0])}</b> (${x[1]})`).join(' · ')}</div>`:''}
+   ${cnt.b?`<div style="margin-top:10px"><b class="g">🟢 Kabar baik terbaru</b><ul style="margin:4px 0 0;padding-left:18px;line-height:1.5">${h('b')}</ul></div>`:''}
+   ${cnt.k?`<div style="margin-top:10px"><b class="r">🔴 Kabar buruk terbaru</b><ul style="margin:4px 0 0;padding-left:18px;line-height:1.5">${h('k')}</ul></div>`:''}
+   <div class="nm" style="margin-top:10px">Rangkuman dibuat otomatis dengan menghitung kata kunci pada judul, bukan ditulis oleh AI atau analis, jadi sifatnya gambaran kasar.</div>`;}
+function renderNews(){nwRangkum();const q=($('n-q').value||'').trim().toLowerCase();
   const rows=NW.filter(i=>(NW_F==='all'||i.c===NW_F)&&(!q||(i.j+' '+i.r).toLowerCase().includes(q)));
   const cnt={b:0,k:0,n:0};NW.forEach(i=>cnt[i.c]++);
   const ok=(NW_ST||[]).filter(s=>s.ok),bad=(NW_ST||[]).filter(s=>!s.ok);
