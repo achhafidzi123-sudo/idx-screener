@@ -994,18 +994,22 @@ function renderNews(){nwRangkum();const q=($('n-q').value||'').trim().toLowerCas
   $('n-list').innerHTML=rows.length?rows.map(i=>`<a class="box" href="${esc(i.u)}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;border-left:4px solid ${i.c==='b'?'#22c55e':i.c==='k'?'#ef4444':'#64748b'}">
     <div class="nm">${i.c==='b'?'🟢 Berita baik':i.c==='k'?'🔴 Berita buruk':'⚪ Netral'} · ${esc(i.s)} · ${nwAgo(i.t)}</div>
     <div style="font-weight:700;margin:4px 0">${esc(i.j)}</div>${i.r?`<div class="nm" style="line-height:1.5">${esc(i.r)}</div>`:''}</a>`).join(''):`<div class="empty">${NW.length?'Tidak ada berita yang cocok.':'Belum ada berita. Jembatan Cloudflare belum diperbarui atau belum bisa dijangkau.'}</div>`;}
-const NW_FEEDS={"Antara Bursa":["https://www.antaranews.com/rss/ekonomi-bursa.xml"],"Antara Ekonomi":["https://www.antaranews.com/rss/ekonomi.xml"],"CNBC Indonesia":["https://www.cnbcindonesia.com/market/rss"],"Kontan":["https://investasi.kontan.co.id/rss"],"KabarBursa":["https://www.kabarbursa.com/feed.xml"],"CNN Indonesia":["https://www.cnnindonesia.com/ekonomi/rss","https://www.cnnindonesia.com/rss"],"Bisnis":["https://market.bisnis.com/rss","https://www.bisnis.com/rss","https://finansial.bisnis.com/rss"],"Detik Finance":["https://rss.detik.com/index.php/finance","https://finance.detik.com/rss","https://finance.detik.com/rss/bursa-valas"]};
+const NW_FEEDS={"Antara Bursa":["https://www.antaranews.com/rss/ekonomi-bursa.xml"],"Antara Ekonomi":["https://www.antaranews.com/rss/ekonomi.xml"],"CNBC Indonesia":["https://www.cnbcindonesia.com/market/rss"],"Kontan":["https://investasi.kontan.co.id/rss"],"KabarBursa":["https://www.kabarbursa.com/feed.xml"],"CNN Indonesia":["https://www.cnnindonesia.com/ekonomi/rss","https://www.cnnindonesia.com/rss"],"Bisnis":["https://market.bisnis.com/rss","https://www.bisnis.com/rss","https://finansial.bisnis.com/rss"],"Detik Finance":["https://rss.detik.com/index.php/finance","https://finance.detik.com/rss","https://finance.detik.com/rss/bursa-valas"],"GN:IHSG":["https://news.google.com/rss/search?q=IHSG+saham+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Emiten":["https://news.google.com/rss/search?q=emiten+BEI+laba+OR+dividen+OR+IPO+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Rupiah":["https://news.google.com/rss/search?q=rupiah+kurs+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Bunga":["https://news.google.com/rss/search?q=suku+bunga+Bank+Indonesia+OR+The+Fed+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Komoditas":["https://news.google.com/rss/search?q=harga+emas+OR+batu+bara+OR+nikel+OR+CPO+when:2d&hl=id&gl=ID&ceid=ID:id"],"GN:Ekonomi":["https://news.google.com/rss/search?q=ekonomi+Indonesia+OR+OJK+OR+BEI+when:2d&hl=id&gl=ID&ceid=ID:id"]};
 let NW_MODE='worker';
 async function nwFeedOne(n,urls){
   for(const u of urls){
     try{const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(u),{cache:'no-store'});const j=await r.json();
       if(j.status!=='ok')continue;
       const items=(j.items||[]).map(i=>({j:i.title||'',u:i.link||'',r:String(i.description||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,220),t:Date.parse(String(i.pubDate||'').replace(' ','T')+'Z')||0,s:n})).filter(i=>i.j&&i.u);
+      if(n.startsWith('GN:'))items.forEach(i=>{const k=i.j.lastIndexOf(' - ');if(k>10){i.s=i.j.slice(k+3);i.j=i.j.slice(0,k);}i.r='';});
       if(items.length)return{nama:n,ok:true,items};}catch(e){}}
   return{nama:n,ok:false,items:[]};}
 async function nwFallback(){
   const res=await Promise.all(Object.entries(NW_FEEDS).map(([n,u])=>nwFeedOne(n,u)));
-  return{sumber:res.map(h=>({nama:h.nama,ok:h.ok})),items:res.flatMap(h=>h.items).sort((a,b)=>b.t-a.t).slice(0,200)};}
+  const gn=res.filter(h=>h.nama.startsWith('GN:')),oth=res.filter(h=>!h.nama.startsWith('GN:'));
+  const sumber=oth.map(h=>({nama:h.nama,ok:h.ok}));if(gn.length)sumber.push({nama:'Google News (agregator banyak media)',ok:gn.some(h=>h.ok)});
+  const seen=new Set(),items=[];res.flatMap(h=>h.items).sort((a,b)=>b.t-a.t).forEach(i=>{const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push(i);});
+  return{sumber,items:items.slice(0,250)};}
 async function loadNews(){let j=null;
   try{const r=await fetch(NEWS_URL,{cache:'no-store'});if(r.ok){const x=await r.json();if(x&&Array.isArray(x.items)&&x.items.length)j=x;}}catch(e){}
   NW_MODE=j?'worker':'cadangan';
