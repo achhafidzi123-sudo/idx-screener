@@ -925,9 +925,9 @@ function renderStoch(){if(!PRC)return;
       if(ok&&(!hit||K[i]<hit.v))hit={v:K[i],d:HLD.dates[i]};}
     if(!hit&&!q)continue;
     const last=c[L-1];res.push({k,val:VAL?VAL[k]:NaN,K:K[L-1],D:D[L-1],hit,close:last,chg:(last/(c[Math.max(0,L-6)]||last)-1)*100,date:HLD.dates[L-1]});}
-  res.sort((a,b)=>(a.hit?a.K:999)-(b.hit?b.K:999)||(isFinite(b.val)?b.val:-1)-(isFinite(a.val)?a.val:-1));
+  res.sort((a,b)=>(isFinite(b.val)?b.val:-1)-(isFinite(a.val)?a.val:-1)||a.K-b.K);
   const lab={k:`%K ≤ ${fmt(th)}`,kd:`%K & %D ≤ ${fmt(th)}`,gc:'golden cross oversold'}[mode];
-  $('s-res').textContent=q?`Hasil pencarian "${q}": ${res.length} saham`:`${res.length} saham (${lab}) dari ${total} saham`;
+  $('s-res').textContent=q?`Hasil pencarian "${q}": ${res.length} saham`:`${res.length} saham (${lab}) dari ${total} saham · urut likuiditas (nilai transaksi 5 hari)`;
   $('s-list').innerHTML=res.length?res.map(r=>`<div class="card rcard"><div class="rt"><div class="tk">${esc(r.k)}</div><div class="nm">${fmt(r.close,0)}<br><span class="${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}%</span></div>
     <div class="rr"><small>%K kini</small><b class="${r.K<=th?'r':''}">${fmt(r.K,1)}</b></div>
     <div class="rr"><small>%D kini</small><b class="${r.D<=th?'r':''}">${fmt(r.D,1)}</b></div>
