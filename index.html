@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#040B1A">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-<script>try{var t=localStorage.getItem("idx_theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","dark")}</script>
+<script>try{var t=localStorage.getItem("idx_theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);document.documentElement.setAttribute("data-style",localStorage.getItem("idx_style")==="minimal"?"minimal":"futur")}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-style","futur")}</script>
 <style>
 :root{--bg:#0f1419;--card:#1a2129;--card2:#222b35;--tx:#e8edf2;--mut:#8b98a5;--ac:#22c55e;--rd:#ef4444;--bl:#3b82f6;--yl:#eab308;--bd:#2c3640}
 @media (prefers-color-scheme: light){:root{--bg:#f4f6f8;--card:#fff;--card2:#eef1f4;--tx:#111827;--mut:#5b6673;--bd:#dde2e7}}
@@ -254,6 +254,63 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 ::-webkit-scrollbar-thumb{background:var(--bd)}
 .pane.on{animation:none}
 .tab[hidden]{display:none!important}
+/* ================= TEMA FUTURISTIK 3D (bisa dimatikan lewat tombol ✨) ================= */
+:root[data-style="futur"]{--neon:#33b5f5;--neon2:#8b6cff;--glass:rgba(16,28,52,.55);--glass2:rgba(0,150,224,.10);--edge:rgba(80,190,255,.28);--bd:rgba(80,190,255,.22);--card:rgba(14,26,48,.55);--card2:rgba(0,150,224,.10);--bg:#050a18;--tx:#eaf4ff;--mut:#8aa6c6;--bl:#2aa8f0}
+:root[data-style="futur"][data-theme="light"]{--neon:#1b78d8;--neon2:#6a4bf0;--glass:rgba(255,255,255,.7);--glass2:rgba(27,120,216,.08);--edge:rgba(27,120,216,.28);--bd:rgba(27,120,216,.2);--card:rgba(255,255,255,.72);--card2:rgba(27,120,216,.08);--bg:#eaf1fb;--tx:#0d1b30;--mut:#5a6f8b;--bl:#1b78d8}
+:root[data-style="futur"] html,:root[data-style="futur"] body{background:var(--bg)}
+:root[data-style="futur"] body{background:
+  radial-gradient(900px 520px at 88% -8%,color-mix(in srgb,var(--neon) 30%,transparent),transparent 62%),
+  radial-gradient(700px 500px at -8% 28%,color-mix(in srgb,var(--neon2) 20%,transparent),transparent 60%),
+  radial-gradient(600px 420px at 50% 112%,color-mix(in srgb,var(--neon) 18%,transparent),transparent 60%),var(--bg);background-attachment:fixed}
+:root[data-style="futur"] body::before{display:block;content:"";position:fixed;left:-20%;right:-20%;bottom:0;height:55vh;pointer-events:none;z-index:0;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,var(--neon) 35%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--neon) 35%,transparent) 1px,transparent 1px);
+  background-size:56px 56px;transform:perspective(420px) rotateX(62deg);transform-origin:50% 100%;animation:gridmove 14s linear infinite;
+  -webkit-mask-image:linear-gradient(to top,#000 5%,transparent 85%);mask-image:linear-gradient(to top,#000 5%,transparent 85%)}
+@keyframes gridmove{from{background-position:0 0}to{background-position:0 56px}}
+:root[data-style="futur"] header{background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--edge);box-shadow:0 8px 30px -12px color-mix(in srgb,var(--neon) 40%,transparent)}
+:root[data-style="futur"] .brand{perspective:600px}
+:root[data-style="futur"] .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--neon),var(--neon2));
+  box-shadow:0 0 22px color-mix(in srgb,var(--neon) 60%,transparent),inset 0 1px 0 rgba(255,255,255,.5),inset 0 -6px 10px rgba(0,0,0,.25);animation:logo3d 8s ease-in-out infinite;transform-style:preserve-3d}
+:root[data-style="futur"] .logo svg{width:22px;height:22px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+@keyframes logo3d{0%,100%{transform:rotateY(-18deg) rotateX(8deg)}50%{transform:rotateY(18deg) rotateX(-6deg)}}
+:root[data-style="futur"] h1{font-family:'Space Grotesk','Inter',sans-serif;font-size:20px;font-weight:700;letter-spacing:.2px;
+  background:linear-gradient(90deg,var(--tx),var(--neon) 60%,var(--neon2));-webkit-background-clip:text;background-clip:text;color:transparent}
+:root[data-style="futur"] .sub{text-transform:uppercase;letter-spacing:.5px;font-size:11px}
+:root[data-style="futur"] .live{animation:pulse 2s infinite;box-shadow:0 0 0 0 rgba(46,230,166,.7)}
+:root[data-style="futur"] .tab{border-radius:12px;transition:transform .2s,box-shadow .2s,background .2s,color .2s}
+:root[data-style="futur"] .tab:hover{background:var(--glass2);transform:translateX(3px) translateZ(0)}
+:root[data-style="futur"] .tab.on{color:#fff;background:linear-gradient(135deg,var(--neon),var(--neon2));
+  box-shadow:0 8px 20px -6px color-mix(in srgb,var(--neon) 70%,transparent),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.2)}
+:root[data-style="futur"] .box,:root[data-style="futur"] .card,:root[data-style="futur"] details,:root[data-style="futur"] .sheet{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--glass) 100%,transparent),color-mix(in srgb,var(--glass2) 100%,transparent));
+  border:1px solid var(--edge);border-radius:16px;backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(0,0,0,.2),0 14px 30px -14px rgba(0,0,0,.55),0 2px 0 color-mix(in srgb,var(--neon) 18%,transparent)}
+:root[data-style="futur"] .card{position:relative;transform-style:preserve-3d;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .18s ease-out,box-shadow .2s,border-color .2s;will-change:transform}
+:root[data-style="futur"] .card::before{display:block;content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.8}
+:root[data-style="futur"] .card::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(220px 160px at var(--mx,50%) var(--my,0%),color-mix(in srgb,var(--neon) 22%,transparent),transparent 70%);opacity:0;transition:opacity .2s}
+:root[data-style="futur"] .card:hover{border-color:var(--neon);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 22px 40px -16px rgba(0,0,0,.65),0 0 24px -4px color-mix(in srgb,var(--neon) 55%,transparent)}
+:root[data-style="futur"] .card:hover::after{opacity:1}
+:root[data-style="futur"] .card .tk{transform:translateZ(26px);display:inline-block;text-shadow:0 4px 10px rgba(0,0,0,.35)}
+:root[data-style="futur"] .card .rr b,:root[data-style="futur"] .card .px{transform:translateZ(14px);display:inline-block}
+:root[data-style="futur"] .box h3,:root[data-style="futur"] .card h3{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:.3px}
+:root[data-style="futur"] input,:root[data-style="futur"] select,:root[data-style="futur"] textarea{background:color-mix(in srgb,var(--bg) 60%,transparent);border:1px solid var(--edge);border-radius:12px;box-shadow:inset 0 2px 6px rgba(0,0,0,.3)}
+:root[data-style="futur"] input:focus,:root[data-style="futur"] select:focus,:root[data-style="futur"] textarea:focus{border-color:var(--neon);box-shadow:inset 0 2px 6px rgba(0,0,0,.3),0 0 0 3px color-mix(in srgb,var(--neon) 28%,transparent),0 0 18px -2px color-mix(in srgb,var(--neon) 50%,transparent)}
+:root[data-style="futur"] button{background:linear-gradient(180deg,color-mix(in srgb,var(--glass2) 100%,transparent),transparent);border:1px solid var(--edge);border-radius:12px;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--neon) 22%,transparent),0 8px 14px -8px rgba(0,0,0,.5);transition:transform .08s,box-shadow .08s,border-color .15s}
+:root[data-style="futur"] button:hover{border-color:var(--neon)}
+:root[data-style="futur"] button:active{transform:translateY(3px);box-shadow:0 0 0 color-mix(in srgb,var(--neon) 22%,transparent),0 2px 4px -2px rgba(0,0,0,.5)}
+:root[data-style="futur"] button.pri{background:linear-gradient(135deg,var(--neon),var(--neon2));border:none;color:#fff;box-shadow:0 4px 0 color-mix(in srgb,var(--neon2) 70%,#000),0 12px 20px -8px color-mix(in srgb,var(--neon) 65%,transparent),inset 0 1px 0 rgba(255,255,255,.4)}
+:root[data-style="futur"] .seg{background:var(--glass2);border:1px solid var(--edge);border-radius:14px;box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
+:root[data-style="futur"] .seg button{box-shadow:none;border:none;background:none}
+:root[data-style="futur"] .seg button.on{background:linear-gradient(135deg,var(--neon),var(--neon2));color:#fff;box-shadow:0 4px 12px -2px color-mix(in srgb,var(--neon) 60%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
+:root[data-style="futur"] .chip.on,:root[data-style="futur"] .bchip{background:linear-gradient(135deg,var(--neon),var(--neon2));border-color:transparent;box-shadow:0 4px 12px -3px color-mix(in srgb,var(--neon) 55%,transparent)}
+:root[data-style="futur"] .banner,:root[data-style="futur"] .banner.auto{background:var(--glass2);border:1px solid var(--edge);backdrop-filter:blur(10px)}
+:root[data-style="futur"] .st,:root[data-style="futur"] .bsum,:root[data-style="futur"] .rsif,:root[data-style="futur"] .achip{background:var(--glass2);border:1px solid var(--edge);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+:root[data-style="futur"] .themebtn{box-shadow:0 3px 0 color-mix(in srgb,var(--neon) 22%,transparent),0 0 16px -4px color-mix(in srgb,var(--neon) 60%,transparent)}
+:root[data-style="futur"] .pane.on{animation:fadeUp .4s ease}
+@media (prefers-reduced-motion:reduce){:root[data-style="futur"] body::before,:root[data-style="futur"] .logo{animation:none}:root[data-style="futur"] .card{transform:none!important}}
+@media (hover:none){:root[data-style="futur"] .card{transform:none!important}:root[data-style="futur"] .card .tk,:root[data-style="futur"] .card .rr b{transform:none}}
 </style>
 </head>
 <body>
@@ -261,7 +318,8 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></div>
     <div><h1>Screener By Afi Cuy</h1><div class="sub"><span class="live"></span>Data otomatis · Bursa Efek Indonesia</div></div>
-    <button class="themebtn" id="themebtn" type="button" title="Ganti tema" aria-label="Ganti tema gelap/terang">🌙</button>
+    <button class="themebtn" id="stylebtn" type="button" style="margin-left:auto" title="Ganti gaya tampilan" aria-label="Ganti gaya tampilan">✨</button>
+    <button class="themebtn" id="themebtn" style="margin-left:8px" type="button" title="Ganti tema" aria-label="Ganti tema gelap/terang">🌙</button>
   </div>
 </header>
 <nav class="tabs" id="tabs">
@@ -956,6 +1014,20 @@ function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{l
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#0c0e12':'#f6f7f9';}
 $('themebtn').onclick=()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 setTheme(document.documentElement.getAttribute('data-theme')||'dark');
+
+/* ===== Gaya futuristik 3D / minimalis + efek miring kartu ===== */
+function setStyle(t){document.documentElement.setAttribute('data-style',t);try{localStorage.setItem('idx_style',t)}catch(e){}
+  const b=$('stylebtn');if(b){b.style.opacity=t==='futur'?'1':'.55';b.title=t==='futur'?'Gaya futuristik 3D aktif (klik untuk minimalis)':'Gaya minimalis aktif (klik untuk futuristik 3D)';}}
+$('stylebtn').onclick=()=>setStyle(document.documentElement.getAttribute('data-style')==='futur'?'minimal':'futur');
+setStyle(document.documentElement.getAttribute('data-style')||'futur');
+(function(){if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;let cur=null;
+  document.addEventListener('pointermove',e=>{if(document.documentElement.dataset.style!=='futur')return;
+    const c=e.target.closest&&e.target.closest('.card');
+    if(cur&&cur!==c){cur.style.removeProperty('--rx');cur.style.removeProperty('--ry');}
+    cur=c;if(!c)return;const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+    c.style.setProperty('--ry',((x-.5)*12).toFixed(2)+'deg');c.style.setProperty('--rx',((.5-y)*12).toFixed(2)+'deg');
+    c.style.setProperty('--mx',(x*100).toFixed(1)+'%');c.style.setProperty('--my',(y*100).toFixed(1)+'%');},{passive:true});
+  document.addEventListener('pointerleave',()=>{if(cur){cur.style.removeProperty('--rx');cur.style.removeProperty('--ry');cur=null;}},true);})();
 /* ===== Berita ===== */
 const NEWS_URL='https://snowy-cake-3209.ach-hafidzi123.workers.dev/?berita=1';
 const NW_POS=['naik','menguat','melonjak','meroket','melesat','menanjak','rekor tertinggi','laba naik','laba melonjak','untung','surplus','tumbuh','pertumbuhan','positif','optimis','optimistis','net buy','akumulasi','dividen','buyback','pulih','rebound','menghijau','cetak laba','kinerja moncer','moncer','investasi masuk','upgrade','diborong','ekspansi','kontrak baru','lampaui target','kenaikan','reli','cerah','stimulus','pemangkasan bunga','suku bunga turun','menguat tipis','ditutup naik','dibuka naik','capai rekor'];
