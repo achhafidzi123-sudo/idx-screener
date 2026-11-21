@@ -493,6 +493,8 @@ img,svg{max-width:100%}
       <div class="f"><label>Jarak "mendekati" PRZ (%)</label><input id="h-prox" inputmode="decimal" value="3"></div>
       <div class="f"><label>Titik D terbentuk dalam … hari</label><input id="h-days" inputmode="numeric" value="10"></div>
       <div class="f"><label>Min. nilai transaksi/hari (Rp miliar)</label><input id="h-val" inputmode="decimal" value="1"></div>
+      <div class="f"><label>Min. peluang historis (%)</label><input id="h-pl" inputmode="numeric" placeholder="mis. 55"></div>
+      <div class="f"><label>Urutkan</label><select id="h-sort"><option value="val">Nilai transaksi</option><option value="pl">Peluang historis</option><option value="sk">Kecocokan</option></select></div>
       <div class="f"><label>Cari saham</label><input id="h-q" type="search" placeholder="Kode…"></div>
     </div>
     <details class="hhelp"><summary>Rasio yang dipakai &amp; catatan</summary>
@@ -867,6 +869,9 @@ function hBacktest(o){
         for(let q=e+1;q<=e+BT_H;q++){const ch=(cl[q]/p0-1)*(f.bull?1:-1);if(ch>=BT_X){res=1;break;}if(ch<=-BT_X){res=-1;break;}}
         add(sp.n,f.bull,res>0?1:0,res<0?1:0,res===0?1:0);}}}
   BT=R;BT_KEY=key;BT_SRC=HC;return R;}
+function hPc(r,R){const g=R[r.n+'|'+r.bull],a=R['*|'+r.bull];let use=g,lab=r.n;
+  if(!use||use.w+use.l<10){use=a;lab='semua pola '+(r.bull?'bullish':'bearish');}
+  if(!use||use.w+use.l<1)return null;const dec=use.w+use.l;return{pc:Math.round(use.w/dec*100),n:dec+use.u,use,lab};}
 function hPeluang(r,R){
   const g=R[r.n+'|'+r.bull],a=R['*|'+r.bull];let use=g,lab=r.n;
   if(!use||use.w+use.l<10){use=a;lab='semua pola '+(r.bull?'bullish':'bearish');}
@@ -879,13 +884,14 @@ function renderHarm(){if(!PRC||!$('h-list'))return;
   if(HCsrc!==PRC){const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));HC={};
     for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1);HC[k]=a.map(x=>x[1]);}HCsrc=PRC;}
   const o={zz:(num($('h-zz').value)||6)/100,tol:(num($('h-tol').value)||8)/100,prox:(num($('h-prox').value)||3)/100,days:parseInt($('h-days').value)||10,pat:$('h-pat').value};
-  const minVal=(num($('h-val').value)||0)*1e9,q=$('h-q').value.trim().toUpperCase(),dirF=$('h-dir').value,stF=$('h-st').value;
+  const minPl=num($('h-pl').value)||0,minVal=(num($('h-val').value)||0)*1e9,q=$('h-q').value.trim().toUpperCase(),dirF=$('h-dir').value,stF=$('h-st').value;
   let res=[];const BTR=hBacktest(o);
   for(const k in HC){if(q&&!k.includes(q))continue;if(VAL&&minVal>0&&k in VAL&&VAL[k]<minVal)continue;
     const cl=HC[k];if(cl.length<40)continue;
     for(const r of harmScan(cl,o)){if(dirF==='bull'&&!r.bull||dirF==='bear'&&r.bull)continue;
-      if(stF==='soon'&&r.st==='done'||stF==='done'&&r.st!=='done')continue;r.k=k;r.L=cl.length;res.push(r);}}
-  res.sort((a,b)=>((VAL&&VAL[b.k])||0)-((VAL&&VAL[a.k])||0)||b.sk-a.sk);
+      if(stF==='soon'&&r.st==='done'||stF==='done'&&r.st!=='done')continue;r.k=k;r.L=cl.length;const pp=hPc(r,BTR);r.pl=pp?pp.pc:-1;if(minPl>0&&r.pl<minPl)continue;res.push(r);}}
+  const so=$('h-sort').value;
+  res.sort(so==='pl'?(a,b)=>b.pl-a.pl||b.sk-a.sk:so==='sk'?(a,b)=>b.sk-a.sk:(a,b)=>((VAL&&VAL[b.k])||0)-((VAL&&VAL[a.k])||0)||b.sk-a.sk);
   const ST={done:'Sudah terbentuk',zone:'Di zona PRZ',near:'Mendekati PRZ'};
   $('h-res').textContent=`${res.length} pola ditemukan dari ${Object.keys(HC).length} saham`+(res.length>300?' · menampilkan 300 teratas':'');
   $('h-list').innerHTML=res.length?res.slice(0,300).map(r=>`<div class="card hcard"><div class="tk">${esc(r.k)} <span class="hb ${r.bull?'g':'r'}">${r.bull?'▲ Bullish':'▼ Bearish'}</span></div>
@@ -897,7 +903,7 @@ function renderHarm(){if(!PRC||!$('h-list'))return;
     ${hPeluang(r,BTR)}
     ${VAL&&isFinite(VAL[r.k])?`<div class="rr"><small>Nilai 5h</small><b>Rp ${rupiah(VAL[r.k])}</b></div>`:''}</div>`).join('')
     :`<div class="empty">Belum ada saham yang cocok. Coba perbesar toleransi, kecilkan ayunan zigzag, atau ubah filter.</div>`;}
-['h-zz','h-tol','h-prox','h-days','h-val','h-q','h-pat','h-dir','h-st'].forEach(id=>$(id)&&$(id).addEventListener('input',renderHarm));
+['h-zz','h-tol','h-prox','h-days','h-val','h-q','h-pat','h-dir','h-st','h-pl','h-sort'].forEach(id=>$(id)&&$(id).addEventListener('input',renderHarm));
 
 /* ======================= ASTRONACCI (astro + Fibonacci waktu) ======================= */
 function moonPhaseJD(k,ph){k=k+ph;const T=k/1236.85,r=Math.PI/180,s=Math.sin;
