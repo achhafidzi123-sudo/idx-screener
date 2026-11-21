@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#040B1A">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-<script>try{var t=localStorage.getItem("idx_theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);document.documentElement.setAttribute("data-style",localStorage.getItem("idx_style")==="minimal"?"minimal":"futur")}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-style","futur")}</script>
+<script>try{var t=localStorage.getItem("idx_theme2");if(t!=="light"&&t!=="dark")t="light";document.documentElement.setAttribute("data-theme",t);document.documentElement.setAttribute("data-style",localStorage.getItem("idx_style")==="minimal"?"minimal":"futur")}catch(e){document.documentElement.setAttribute("data-theme","dark");document.documentElement.setAttribute("data-style","futur")}</script>
 <style>
 :root{--bg:#0f1419;--card:#1a2129;--card2:#222b35;--tx:#e8edf2;--mut:#8b98a5;--ac:#22c55e;--rd:#ef4444;--bl:#3b82f6;--yl:#eab308;--bd:#2c3640}
 @media (prefers-color-scheme: light){:root{--bg:#f4f6f8;--card:#fff;--card2:#eef1f4;--tx:#111827;--mut:#5b6673;--bd:#dde2e7}}
@@ -362,6 +362,26 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 :root[data-style="futur"] .st b{color:var(--tx)}
 :root[data-style="futur"] .themebtn{box-shadow:none}
 :root[data-style="futur"] .pill{font-weight:800}
+/* ================= PALET BIRU MUDA TERANG & PUTIH ================= */
+:root[data-style="futur"][data-theme="light"]{--neon:#7dd3fc;--neon2:#38bdf8;--vio:#0284c7;--bg:#f0f9ff;--card:#ffffff;--card2:#e6f4fe;--glass:#ffffff;--glass2:#e6f4fe;--bd:#c7e4f8;--edge:#c7e4f8;--tx:#0b2a4a;--mut:#56789a;--ac:#0e9f6e;--rd:#e0314f;--bl:#0ea5e9;--yl:#b8860b}
+:root[data-style="futur"][data-theme="dark"]{--neon:#bae6fd;--neon2:#7dd3fc;--vio:#38bdf8;--bg:#06182b;--card:#0c2540;--card2:#123456;--glass:#0c2540;--glass2:#123456;--bd:#1f4a73;--edge:#1f4a73;--tx:#eaf6ff;--mut:#8fb3d1;--ac:#34e0a1;--rd:#ff6b81;--bl:#38bdf8;--yl:#ffd23f}
+:root[data-style="futur"][data-theme="light"] body{background:
+  radial-gradient(900px 520px at 90% -10%,rgba(56,189,248,.28),transparent 62%),
+  radial-gradient(700px 480px at -10% 15%,rgba(125,211,252,.35),transparent 60%),#f0f9ff;background-attachment:fixed}
+:root[data-style="futur"][data-theme="light"] header{background:rgba(255,255,255,.9)}
+:root[data-style="futur"][data-theme="light"] .tab{color:#3d6385}
+:root[data-style="futur"][data-theme="light"] .tab.on,:root[data-style="futur"][data-theme="light"] button.pri,:root[data-style="futur"][data-theme="light"] .seg button.on,:root[data-style="futur"][data-theme="light"] .chip.on,:root[data-style="futur"][data-theme="light"] .bchip{background:linear-gradient(90deg,#0284c7,#38bdf8);color:#fff}
+:root[data-style="futur"][data-theme="light"] .card::before{background:linear-gradient(90deg,#0284c7,#38bdf8,#7dd3fc)}
+:root[data-style="futur"][data-theme="light"] h1,:root[data-style="futur"][data-theme="light"] .logo{background:linear-gradient(90deg,#0284c7,#38bdf8)}
+:root[data-style="futur"][data-theme="light"] h1{-webkit-background-clip:text;background-clip:text;color:transparent}
+:root[data-style="futur"][data-theme="light"] .logo{background:linear-gradient(135deg,#0284c7,#38bdf8)}
+:root[data-style="futur"][data-theme="dark"] .tab.on,:root[data-style="futur"][data-theme="dark"] button.pri,:root[data-style="futur"][data-theme="dark"] .seg button.on,:root[data-style="futur"][data-theme="dark"] .chip.on,:root[data-style="futur"][data-theme="dark"] .bchip{background:linear-gradient(90deg,#0284c7,#38bdf8);color:#fff}
+:root[data-style="futur"][data-theme="dark"] body{background:
+  radial-gradient(800px 480px at 90% -10%,rgba(56,189,248,.25),transparent 62%),
+  radial-gradient(700px 480px at -10% 20%,rgba(2,132,199,.3),transparent 60%),#06182b;background-attachment:fixed}
+:root[data-style="futur"] .card::before{background:linear-gradient(90deg,#0284c7,#38bdf8,#7dd3fc)}
+:root[data-style="futur"] header{border-image:linear-gradient(90deg,#0284c7,#38bdf8,#bae6fd) 1}
+:root[data-style="futur"] .box{border-left-color:#38bdf8}
 </style>
 </head>
 <body>
@@ -1072,7 +1092,7 @@ placeTabs();addEventListener('resize',placeTabs);
 
 
 /* ===== Tema gelap/terang ===== */
-function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('idx_theme',t)}catch(e){}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('idx_theme2',t)}catch(e){}
   const b=$('themebtn');if(b){b.textContent=t==='dark'?'☀️':'🌙';b.title=t==='dark'?'Ganti ke mode terang':'Ganti ke mode gelap';}
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='dark'?'#0c0e12':'#f6f7f9';}
 $('themebtn').onclick=()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
