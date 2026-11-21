@@ -416,6 +416,7 @@ img,svg{max-width:100%}
     <button class="tab" data-t="astro">🌙 Astronacci</button>
     <button class="tab" data-t="news">📰 Berita</button>
     <button class="tab" data-t="ipo">🚀 IPO</button>
+    <button class="tab" data-t="ki">📢 Keterbukaan</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -547,8 +548,22 @@ img,svg{max-width:100%}
       <a class="btn" href="https://www.idx.co.id" target="_blank" rel="noopener">🏛️ IDX (calon emiten &amp; prospektus)</a>
       <a class="btn" href="https://www.google.com/search?q=jadwal+IPO+saham+terbaru+prospektus+pdf" target="_blank" rel="noopener">🔎 Cari semua prospektus</a>
     </div>
-    <div class="nm" id="ip-stat" style="margin-top:10px;line-height:1.55">Memuat…</div></div>
+    <div class="nm" id="ip-stat" style="margin-top:10px;line-height:1.55">Memuat…</div><div class="nm" id="ip-age" style="margin-top:4px"></div></div>
   <div id="ip-list"></div>
+</section>
+
+<section class="pane" id="p-ki">
+  <div class="box"><h3>Keterbukaan informasi: pembelian saham orang dalam &amp; investor besar</h3>
+    <div class="nm" style="line-height:1.6">Diambil otomatis dari berita transaksi saham oleh direksi, komisaris, pengendali, pemegang saham &gt;5%, dan investor besar (mis. Lo Kheng Hong). Data resmi lengkap ada di situs berikut:</div>
+    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">
+      <a class="btn" href="https://www.idx.co.id/id/perusahaan-tercatat/keterbukaan-informasi/" target="_blank" rel="noopener">🏛️ Keterbukaan Informasi BEI</a>
+      <a class="btn" href="https://www.ksei.co.id" target="_blank" rel="noopener">📑 KSEI (kepemilikan)</a>
+    </div>
+    <div class="seg" id="ki-seg" style="margin-top:10px"><button data-kf="all" class="on">Semua</button><button data-kf="b">🟢 Beli</button><button data-kf="j">🔴 Jual</button></div>
+    <select id="ki-cat" style="width:100%;margin-bottom:8px"><option value="">Semua pelaku</option><option value="inv">Investor besar (Lo Kheng Hong dkk)</option><option value="dir">Direksi / komisaris</option><option value="ctl">Pengendali / pemegang saham utama</option></select>
+    <input id="ki-q" placeholder="Cari kode saham / nama, mis. BBCA atau Lo Kheng Hong" style="width:100%;margin-bottom:8px">
+    <div class="nm" id="ki-stat" style="line-height:1.55">Memuat…</div><div class="nm" id="ki-age" style="margin-top:4px"></div></div>
+  <div id="ki-list"></div>
 </section>
 
 <section class="pane" id="p-astro">
@@ -1290,14 +1305,13 @@ function newsTimer(){clearInterval(NW_T);if(document.querySelector('.tab.on')?.d
 const IPO_FEEDS=["https://news.google.com/rss/search?q=IPO+saham+penawaran+umum+perdana+when:14d&hl=id&gl=ID&ceid=ID:id","https://news.google.com/rss/search?q=calon+emiten+prospektus+OR+bookbuilding+OR+%22masa+penawaran%22+when:14d&hl=id&gl=ID&ceid=ID:id","https://news.google.com/rss/search?q=pencatatan+perdana+saham+BEI+when:14d&hl=id&gl=ID&ceid=ID:id"];
 let IPO_DONE=false;
 async function loadIpo(){
-  if(IPO_DONE)return;
   const res=await Promise.all(IPO_FEEDS.map(u=>nwFeedOne('GN:ipo',[u])));
   const seen=new Set(),items=[];
   res.flatMap(h=>h.items).sort((a,b)=>b.t-a.t).forEach(i=>{
     if(!/\bipo\b|penawaran umum|bookbuilding|book building|prospektus|pencatatan perdana|calon emiten|go public/i.test(i.j))return;
     const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push(i);});
-  if(!items.length){$('ip-stat').innerHTML='<span class="r">Belum bisa mengambil berita IPO. Gunakan tombol e-IPO / IDX di atas.</span>';return;}
-  IPO_DONE=true;
+  if(!items.length){if(!IPO_DONE)$('ip-stat').innerHTML='<span class="r">Belum bisa mengambil berita IPO. Gunakan tombol e-IPO / IDX di atas.</span>';return;}
+  IPO_DONE=true;LV.ipo=Date.now();
   $('ip-stat').innerHTML=items.length+' berita IPO terbaru (14 hari terakhir). <span class="nm">Nama perusahaan, harga &amp; jadwal diambil dari judul berita dan bisa tidak lengkap; cek prospektus resmi sebelum memesan. Bukan saran investasi.</span>';
   $('ip-list').innerHTML=items.map(i=>{
     const m=i.j.match(/PT\s[^,:;()|]{3,40}?\sTbk|\(([A-Z]{4})\)/);
@@ -1309,10 +1323,57 @@ async function loadIpo(){
       <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">
         <a class="btn" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">📄 Prospektus</a>
         <a class="btn" href="https://e-ipo.co.id" target="_blank" rel="noopener">e-IPO</a></div></div>`;}).join('');}
+
+/* ---- KETERBUKAAN INFORMASI ---- */
+const KI_FEEDS=["https://news.google.com/rss/search?q=%22Lo+Kheng+Hong%22+saham+when:30d&hl=id&gl=ID&ceid=ID:id",
+"https://news.google.com/rss/search?q=direksi+OR+komisaris+beli+OR+borong+saham+emiten+when:30d&hl=id&gl=ID&ceid=ID:id",
+"https://news.google.com/rss/search?q=transaksi+insider+OR+%22pemegang+saham+utama%22+OR+pengendali+beli+saham+when:30d&hl=id&gl=ID&ceid=ID:id",
+"https://news.google.com/rss/search?q=%22Prajogo+Pangestu%22+OR+%22Low+Tuck+Kwong%22+OR+%22Boy+Thohir%22+OR+%22Hartono%22+beli+saham+when:30d&hl=id&gl=ID&ceid=ID:id",
+"https://news.google.com/rss/search?q=keterbukaan+informasi+pembelian+saham+OR+penjualan+saham+direksi+when:30d&hl=id&gl=ID&ceid=ID:id"];
+const KI_INV=/lo kheng hong|\blkh\b|prajogo|low tuck kwong|boy thohir|garibaldi|hartono|sukanto|tahir|anthoni salim|hapsoro|kuncoro|investor kakap|warren buffett/i;
+const KI_DIR=/direksi|direktur|komisaris|\bceo\b|petinggi|manajemen/i;
+const KI_CTL=/pengendali|pemegang saham (utama|pengendali)|induk|pemegang saham/i;
+const KI_BELI=/\bbeli\b|borong|akumulasi|serap|tambah(?:\skepemilikan)?|menambah|lahap|koleksi|memborong|membeli/i;
+const KI_JUAL=/\bjual\b|lepas|divestasi|lego|melepas|menjual|obral|kurangi/i;
+let KI=[],KI_F='all',KI_DONE=false;
+function kiTag(t){const c=[];if(KI_INV.test(t))c.push('inv');if(KI_DIR.test(t))c.push('dir');if(KI_CTL.test(t))c.push('ctl');return c;}
+function kiRender(){const q=($('ki-q').value||'').trim().toLowerCase(),cat=$('ki-cat').value;
+  const rows=KI.filter(i=>(KI_F==='all'||i.d===KI_F)&&(!cat||i.c.includes(cat))&&(!q||(i.j+' '+i.s).toLowerCase().includes(q)||i.tk.some(x=>x.toLowerCase()===q)));
+  const nb=KI.filter(i=>i.d==='b').length,nj=KI.filter(i=>i.d==='j').length;
+  $('ki-stat').innerHTML=KI.length?`${KI.length} berita (30 hari terakhir) · 🟢 ${nb} beli · 🔴 ${nj} jual · ${KI.length-nb-nj} lainnya<br><span class="nm">Klasifikasi beli/jual dari kata kunci pada judul, bisa meleset. Buka beritanya dan cek keterbukaan informasi resmi sebelum mengambil keputusan. Bukan saran investasi.</span>`:'';
+  $('ki-list').innerHTML=rows.length?rows.map(i=>`<div class="box" style="border-left:4px solid ${i.d==='b'?'#22c55e':i.d==='j'?'#ef4444':'#64748b'}">
+    <div class="nm">${i.d==='b'?'🟢 Beli':i.d==='j'?'🔴 Jual':'⚪ Info'} · ${esc(i.s)} · ${nwAgo(i.t)}</div>
+    <a href="${esc(i.u)}" target="_blank" rel="noopener" style="display:block;font-weight:700;margin:4px 0;text-decoration:none;color:inherit">${esc(i.j)}</a>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${i.tk.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}${i.c.map(x=>`<span class="chip">${x==='inv'?'Investor besar':x==='dir'?'Direksi/komisaris':'Pengendali'}</span>`).join('')}</div></div>`).join('')
+    :`<div class="empty">${KI.length?'Tidak ada berita yang cocok dengan filter.':'Belum ada berita.'}</div>`;}
+async function loadKi(){
+  const res=await Promise.all(KI_FEEDS.map(u=>nwFeedOne('GN:ki',[u])));
+  const seen=new Set(),items=[];
+  res.flatMap(h=>h.items).sort((a,b)=>b.t-a.t).forEach(i=>{
+    if(!/saham|emiten|\bbei\b|ihsg/i.test(i.j))return;
+    if(!(KI_BELI.test(i.j)||KI_JUAL.test(i.j)||KI_INV.test(i.j)||/keterbukaan|insider|kepemilikan/i.test(i.j)))return;
+    const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);
+    const tk=[...new Set((i.j.match(/\b[A-Z]{4}\b/g)||[]).filter(t=>UNIV[t]))].slice(0,4);
+    items.push({...i,tk,c:kiTag(i.j),d:KI_BELI.test(i.j)&&!KI_JUAL.test(i.j)?'b':KI_JUAL.test(i.j)&&!KI_BELI.test(i.j)?'j':'n'});});
+  if(!items.length){if(!KI.length)$('ki-stat').innerHTML='<span class="r">Belum bisa mengambil berita. Gunakan tombol Keterbukaan Informasi BEI di atas.</span>';return;}
+  KI=items;KI_DONE=true;LV.ki=Date.now();kiRender();}
+document.querySelectorAll('#ki-seg button').forEach(b=>b.onclick=()=>{KI_F=b.dataset.kf;document.querySelectorAll('#ki-seg button').forEach(x=>x.classList.toggle('on',x===b));kiRender();});
+$('ki-cat').oninput=kiRender;$('ki-q').oninput=kiRender;
+
+/* ---- Pembaruan otomatis (tiap 60 detik) + penunjuk detik ---- */
+const LV={ki:0,ipo:0};let LV_T=null,LV_C=null;
+function liveTick(){const t=document.querySelector('.tab.on')?.dataset.t;
+  const m={ki:['ki-age',LV.ki],ipo:['ip-age',LV.ipo]}[t];if(!m)return;
+  const el=$(m[0]);if(!el)return;if(!m[1]){el.textContent='Memuat…';return;}
+  const d=Math.floor((Date.now()-m[1])/1000);el.innerHTML='🔄 Otomatis diperiksa ulang tiap 60 detik · terakhir diperbarui <b>'+(d<60?d+' detik':Math.floor(d/60)+' menit')+'</b> lalu';}
+function liveTimer(){clearInterval(LV_T);clearInterval(LV_C);const t=document.querySelector('.tab.on')?.dataset.t;
+  if(t!=='ki'&&t!=='ipo')return;const f=t==='ki'?loadKi:loadIpo;f();
+  LV_T=setInterval(()=>{if(!document.hidden)f();},60000);LV_C=setInterval(liveTick,1000);liveTick();}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)liveTimer();});
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();if(t.dataset.t==='ipo')loadIpo();});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();});
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
