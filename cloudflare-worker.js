@@ -31,6 +31,8 @@ const FEEDS = {
   "Antara Ekonomi": "https://www.antaranews.com/rss/ekonomi.xml",
   "CNBC Indonesia": "https://www.cnbcindonesia.com/market/rss",
   "Kontan": "https://investasi.kontan.co.id/rss",
+  "KabarBursa": "https://www.kabarbursa.com/feed.xml",
+  "CNN Indonesia": "https://www.cnnindonesia.com/ekonomi/rss",
   "Bisnis": "https://market.bisnis.com/rss",
   "Detik Finance": "https://rss.detik.com/index.php/finance",
 };
