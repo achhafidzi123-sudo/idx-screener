@@ -919,9 +919,21 @@ function bsTable(rows,side){if(!rows||!rows.length)return `<div class="nm" style
   return `<table class="bst"><thead><tr><th>#</th><th>Broker</th><th>Lot</th><th>Nilai</th><th>Avg</th></tr></thead><tbody>${rows.map((r,i)=>`<tr>
     <td class="nm">${i+1}</td><td><b class="${side==='b'?'g':'r'}">${esc(r[0])}</b>${bname(r[0])?`<div class="nm">${esc(bname(r[0]))}</div>`:''}</td>
     <td>${lotfmt(r[1])}</td><td>${rupiah(r[2])}</td><td>${fmt(r[3],0)}</td></tr>`).join('')}</tbody></table>`;}
+function brkLinks(k){let tpl='';try{tpl=localStorage.getItem('idx_apptpl')||''}catch(e){}
+  const u=t=>t.replace(/\{KODE\}/gi,encodeURIComponent(k));
+  const own=/^https?:\/\/.+/i.test(tpl)?`<a class="chip" href="${esc(u(tpl))}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin:0 6px 6px 0;background:var(--bl);color:#fff;border-radius:999px;padding:6px 12px">📱 Buka di aplikasi saya</a>`:'';
+  return `<div style="margin-top:10px"><div class="nm" style="margin-bottom:6px">Lihat broker summary ${esc(k)} langsung di aplikasi trading Anda:</div>
+   ${own}<a class="chip" href="https://stockbit.com/symbol/${encodeURIComponent(k)}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block;margin:0 6px 6px 0;border:1px solid var(--bd);border-radius:999px;padding:6px 12px;color:var(--tx)">Stockbit</a>
+   <details style="margin-top:4px"><summary class="nm" style="cursor:pointer">Pakai aplikasi lain (Ajaib, M-Stock, Trimegah, dll.)</summary>
+    <div class="nm" style="margin:6px 0;line-height:1.5">Buka halaman saham ini di aplikasi web trading Anda, salin alamatnya dari browser, lalu ganti kode sahamnya dengan <code>{KODE}</code>. Contoh: <code>https://alamat-aplikasi/saham/{KODE}</code>. Alamat ini hanya tersimpan di browser Anda.</div>
+    <input id="app-tpl" placeholder="https://.../{KODE}" value="${esc(tpl)}" style="width:100%">
+    <button type="button" id="app-save" style="margin-top:6px">Simpan</button></details></div>`;}
+document.addEventListener('click',e=>{if(e.target&&e.target.id==='app-save'){const v=($('app-tpl').value||'').trim();
+  try{if(v&&!/^https?:\/\/.+\{KODE\}/i.test(v)){$('app-tpl').style.borderColor='#f26b6b';$('app-tpl').placeholder='Harus diawali https:// dan memuat {KODE}';$('app-tpl').value='';return;}localStorage.setItem('idx_apptpl',v);}catch(err){}
+  renderBS();}});
 async function renderBS(){const box=$('bs-box');if(!box||!CUR_K)return;const k=CUR_K;
   const head=`<h3 style="margin:0 0 10px;font-size:14px">Broker Summary</h3>`;
-  if(!BS_INDEX||!(BS_INDEX.days||[]).length){box.innerHTML=head+`<div class="nm">Belum ada data broker summary. Data akan muncul otomatis setelah jembatan Cloudflare aktif dan robot berjalan.</div>`;return;}
+  if(!BS_INDEX||!(BS_INDEX.days||[]).length){box.innerHTML=head+`<div class="nm">Data broker summary otomatis belum tersedia, karena sumber gratisnya belum bisa diakses.</div>${brkLinks(k)}`;return;}
   const days=BS_INDEX.days,day=days.includes(BS_DAY)?BS_DAY:days.at(-1);
   const ctl=`<div class="row" style="margin-bottom:10px"><select id="bs-day">${days.slice().reverse().map(d=>`<option value="${d}" ${d===day?'selected':''}>${tgl(d)} ${d.slice(0,4)}</option>`).join('')}</select>
     <div class="seg" style="flex:1;margin:0;min-width:200px">${Object.entries(BOARDS).map(([b,l])=>`<button data-bsb="${b}" class="${b===BS_BOARD?'on':''}">${l}</button>`).join('')}</div></div>`;
