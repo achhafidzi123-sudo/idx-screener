@@ -385,7 +385,8 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 :root[data-style="futur"] .box{border-left-color:#38bdf8}
 a.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--ac);color:#fff!important;font-weight:700;font-size:13px;text-decoration:none}
 /* ---- Perbaikan tampilan HP ---- */
-html,body{max-width:100%;overflow-x:hidden}
+html,body{max-width:100%;overflow-x:clip}
+header{position:sticky!important;top:0;z-index:20!important}
 @media(max-width:700px){
 nav.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;max-width:100%;padding:10px 12px;border-bottom:1px solid var(--bd)}
 nav.tabs .tab{flex:none;min-width:0;padding:6px 2px;font-size:12px;line-height:1.2;min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;word-break:keep-all;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
@@ -397,7 +398,8 @@ header h1{font-size:19px;line-height:1.2}
 table{display:block;overflow-x:auto;max-width:100%}
 img,svg{max-width:100%}
 }
-header{position:relative!important;top:auto!important}
+header{position:sticky!important;top:0!important;z-index:20!important;background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+@media(max-width:700px){header{padding:8px 12px!important}header .logo{width:34px!important;height:34px!important}header h1{font-size:16px!important;white-space:nowrap}header .sub{font-size:9.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}header .themebtn{width:36px!important;height:36px!important;font-size:16px!important}}
 </style>
 </head>
 <body>
@@ -1217,7 +1219,7 @@ $('demo').onclick=()=>{store(HELP[cur].key,null);const u=$('m-unit');if(u)u.valu
 
 /* ======================= TABS & INIT ======================= */
 function placeTabs(){const n=document.getElementById('tabs'),h=document.querySelector('header');
-  if(matchMedia('(min-width:900px)').matches){if(n.parentNode===h)h.after(n);}else if(n.parentNode!==h)h.appendChild(n);}
+  if(n.parentNode===h)h.after(n);}
 placeTabs();addEventListener('resize',placeTabs);
 function navTop(){const n=$('tabs'),h=document.querySelector('header');if(!matchMedia('(min-width:900px)').matches){n.style.top='';return;}n.style.top=Math.max(12,Math.round(h.getBoundingClientRect().bottom)+14)+'px';}
 addEventListener('scroll',navTop,{passive:true});addEventListener('resize',navTop);navTop();
