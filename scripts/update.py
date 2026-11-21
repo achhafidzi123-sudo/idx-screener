@@ -154,6 +154,9 @@ def get_universe(session) -> dict:
 # --------------------------------------------------------------------------------------
 # 2. HARGA
 # --------------------------------------------------------------------------------------
+HL = {}   # kode -> {tanggal: (tertinggi, terendah)}, untuk Stochastic -> data/hl.json
+
+
 def fetch_chart(session, code, rng="1y"):
     for attempt in range(2):
         host = "query1" if attempt % 2 == 0 else "query2"
@@ -168,11 +171,17 @@ def fetch_chart(session, code, rng="1y"):
             res = r.json()["chart"]["result"][0]
             q = res["indicators"]["quote"][0]
             out = {}
-            for t, c, v in zip(res.get("timestamp") or [], q.get("close") or [], q.get("volume") or []):
+            hi_l, lo_l = q.get("high") or [], q.get("low") or []
+            for n, (t, c, v) in enumerate(zip(res.get("timestamp") or [], q.get("close") or [], q.get("volume") or [])):
                 c = clean(c)
                 if c is None:
                     continue
-                out[datetime.fromtimestamp(t, WIB).strftime("%Y-%m-%d")] = (round(c, 2), int(clean(v) or 0))
+                d = datetime.fromtimestamp(t, WIB).strftime("%Y-%m-%d")
+                out[d] = (round(c, 2), int(clean(v) or 0))
+                h = clean(hi_l[n]) if n < len(hi_l) else None
+                l = clean(lo_l[n]) if n < len(lo_l) else None
+                if h is not None and l is not None:
+                    HL.setdefault(code, {})[d] = (round(h, 2), round(l, 2))
             return code, out
         except Exception:  # noqa: BLE001
             time.sleep(1)
@@ -199,9 +208,10 @@ def prices_yfinance(codes):
                 time.sleep(10)
         if df is None or df.empty:
             continue
-        close, vol = df["Close"], df["Volume"]
+        close, vol, high, low = df["Close"], df["Volume"], df["High"], df["Low"]
         if not hasattr(close, "columns"):          # hanya 1 saham -> Series
             close, vol = close.to_frame(f"{chunk[0]}.JK"), vol.to_frame(f"{chunk[0]}.JK")
+            high, low = high.to_frame(f"{chunk[0]}.JK"), low.to_frame(f"{chunk[0]}.JK")
         for col in close.columns:
             code = str(col).replace(".JK", "")
             s = {}
@@ -211,10 +221,33 @@ def prices_yfinance(codes):
                     continue
                 v = clean(vol[col].get(idx)) or 0
                 s[idx.strftime("%Y-%m-%d")] = (round(c, 2), int(v))
+                h, l = clean(high[col].get(idx)), clean(low[col].get(idx))
+                if h is not None and l is not None:
+                    HL.setdefault(code, {})[idx.strftime("%Y-%m-%d")] = (round(h, 2), round(l, 2))
             if s:
                 series[code] = s
         log(f"  {min(k + 100, len(codes))}/{len(codes)} (berhasil {len(series)})")
     return series
+
+
+def save_hl(dates, close):
+    """Harga tertinggi/terendah harian (untuk Stochastic). Hari lama dipertahankan dari file sebelumnya."""
+    try:
+        old = read_json(DATA / "hl.json", {})
+        od = old.get("dates") or []
+        oh, ol = old.get("high") or {}, old.get("low") or {}
+        high, low = {}, {}
+        for c in close:
+            m = dict(HL.get(c, {}))
+            for i, d in enumerate(od):
+                if d not in m and i < len(oh.get(c, [])) and oh[c][i] is not None and ol.get(c, [None] * (i + 1))[i] is not None:
+                    m[d] = (oh[c][i], ol[c][i])
+            high[c] = [m[d][0] if d in m else None for d in dates]
+            low[c] = [m[d][1] if d in m else None for d in dates]
+        write_json(DATA / "hl.json", {"dates": dates, "high": high, "low": low})
+        log(f"  hl.json: {sum(1 for c in high if any(x is not None for x in high[c]))} saham")
+    except Exception as e:  # noqa: BLE001
+        log(f"  hl.json dilewati: {e}")
 
 
 def get_prices(session, codes):
@@ -269,6 +302,7 @@ def get_prices(session, codes):
     payload = {"updated": now_wib().strftime("%d %b %Y %H:%M WIB"), "source": "Yahoo Finance",
                "failed": failed, "dates": dates, "close": close, "vol": vol, "value5d": value, "valueLast": last_val}
     write_json(DATA / "prices.json", payload)
+    save_hl(dates, close)
     log(f"  Tersimpan: {len(close)} saham, {len(dates)} hari, terakhir {dates[-1]}")
     return payload
 

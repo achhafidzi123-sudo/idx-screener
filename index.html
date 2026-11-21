@@ -386,7 +386,7 @@ a.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--
 /* ---- Perbaikan tampilan HP ---- */
 html,body{max-width:100%;overflow-x:hidden}
 @media(max-width:700px){
-nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;overflow:visible;max-width:100%;padding:10px 12px;border-bottom:1px solid var(--bd)}
+nav.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:visible;max-width:100%;padding:10px 12px;border-bottom:1px solid var(--bd)}
 nav.tabs .tab{flex:none;min-width:0;padding:6px 2px;font-size:12px;line-height:1.2;min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;word-break:keep-all;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
 nav.tabs .tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .pane,.box,.card,.row,.fgrid,.agrid{min-width:0;max-width:100%;box-sizing:border-box}
@@ -411,6 +411,7 @@ img,svg{max-width:100%}
     <button class="tab on" data-t="cari">🔍 Cari</button>
     <button class="tab" data-t="akum" id="tab-akum">🏦 Akumulasi</button>
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
+    <button class="tab" data-t="stoch">🌀 Stochastic</button>
     <button class="tab" data-t="harm">🔷 Harmonik</button>
     <button class="tab" data-t="astro">🌙 Astronacci</button>
     <button class="tab" data-t="news">📰 Berita</button>
@@ -478,6 +479,26 @@ img,svg{max-width:100%}
   </div>
   <div class="meta" id="r-meta"><span id="r-res"></span></div>
   <div id="r-list"></div>
+</section>
+
+<section class="pane" id="p-stoch">
+  <div class="banner" id="b-stoch"><b>Memuat data…</b></div>
+  <div class="box" id="s-box">
+    <h3>Kriteria Stochastic</h3>
+    <div class="fgrid">
+      <div class="f"><label>%K Length</label><input id="s-k" inputmode="numeric" value="5"></div>
+      <div class="f"><label>%K Smoothing</label><input id="s-ks" inputmode="numeric" value="3"></div>
+      <div class="f"><label>%D Smoothing</label><input id="s-ds" inputmode="numeric" value="3"></div>
+      <div class="f"><label>Batas oversold (≤)</label><input id="s-th" inputmode="decimal" value="20"></div>
+      <div class="f"><label>Kondisi</label><select id="s-mode"><option value="k">%K ≤ batas</option><option value="kd">%K dan %D ≤ batas</option><option value="gc">Golden cross di area oversold</option></select></div>
+      <div class="f"><label>Terjadi dalam … hari terakhir</label><select id="s-look"><option value="1">Hari terakhir saja</option><option value="3">3 hari</option><option value="5">5 hari</option><option value="10">10 hari</option></select></div>
+      <div class="f"><label>Min. nilai transaksi/hari (Rp miliar)</label><input id="s-val" inputmode="decimal" value="1"></div>
+      <div class="f"><label>Cari saham</label><input id="s-q" type="search" placeholder="Kode…"></div>
+    </div>
+    <div class="nm" style="margin-top:8px;line-height:1.5">Pengaturan bawaan sama dengan Stockbit (5, 3, 3). Golden cross = %K naik memotong %D ke atas, saat sebelumnya masih di area oversold.</div>
+  </div>
+  <div class="meta"><span id="s-res"></span></div>
+  <div id="s-list"></div>
 </section>
 
 <!-- ================= FUNDAMENTAL ================= -->
@@ -879,6 +900,43 @@ function hPeluang(r,R){
   const dec=use.w+use.l,pc=Math.round(use.w/dec*100),n=dec+use.u;
   return `<div class="rr"><small>Peluang historis</small><b class="${pc>=55?'g':pc<45?'r':''}">${pc}%</b></div>
    <div class="nm" style="font-size:11px;line-height:1.45">Dari ${n} kasus lampau ${esc(lab)}: ${use.w} naik/turun ≥${BT_X*100}% sesuai arah, ${use.l} berbalik ≥${BT_X*100}%, ${use.u} datar, dalam ${BT_H} hari bursa.${n<30?' <b>Sampel sedikit, jangan jadi patokan.</b>':''}</div>`;}
+
+/* ---- STOCHASTIC ---- */
+let HLD=null;
+const sma=(a,n)=>a.map((_,i)=>{if(i<n-1)return NaN;let t=0;for(let j=i-n+1;j<=i;j++){if(!isFinite(a[j]))return NaN;t+=a[j];}return t/n;});
+function stochSeries(c,h,l,n,ks,ds){
+  const raw=c.map((x,i)=>{if(i<n-1)return NaN;let hh=-Infinity,ll=Infinity;for(let j=i-n+1;j<=i;j++){if(h[j]==null||l[j]==null)return NaN;if(h[j]>hh)hh=h[j];if(l[j]<ll)ll=l[j];}
+    return hh===ll?50:(x-ll)/(hh-ll)*100;});
+  const K=sma(raw,ks);return{K,D:sma(K,ds)};}
+function renderStoch(){if(!PRC)return;
+  if(!HLD){$('s-res').textContent='';$('s-list').innerHTML='<div class="empty">Data harga tertinggi/terendah belum tersedia. Robot akan mengisinya pada pembaruan data berikutnya (sekitar beberapa menit setelah pembaruan website).</div>';return;}
+  const n=Math.max(2,parseInt($('s-k').value)||5),ks=Math.max(1,parseInt($('s-ks').value)||3),ds=Math.max(1,parseInt($('s-ds').value)||3),th=num($('s-th').value)||20,
+    mode=$('s-mode').value,look=+$('s-look').value,q=$('s-q').value.trim().toUpperCase(),minVal=(num($('s-val').value)||0)*1e9;
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||{})[r.d]=r.c);
+  const res=[];let total=0;
+  for(const k in HLD.high){if(q&&!k.includes(q))continue;const cm=by[k];if(!cm)continue;
+    if(VAL&&minVal>0&&k in VAL&&VAL[k]<minVal)continue;
+    const c=HLD.dates.map(d=>cm[d]??null);if(c.filter(x=>x!=null).length<n+ks+ds)continue;total++;
+    const {K,D}=stochSeries(c,HLD.high[k],HLD.low[k],n,ks,ds),L=K.length;if(!isFinite(K[L-1]))continue;
+    let hit=null;
+    for(let i=L-1;i>=Math.max(1,L-look);i--){if(!isFinite(K[i])||!isFinite(D[i]))continue;let ok=false;
+      if(mode==='k')ok=K[i]<=th;else if(mode==='kd')ok=K[i]<=th&&D[i]<=th;
+      else ok=isFinite(K[i-1])&&isFinite(D[i-1])&&K[i-1]<=D[i-1]&&K[i]>D[i]&&Math.min(K[i-1],D[i-1])<=th;
+      if(ok&&(!hit||K[i]<hit.v))hit={v:K[i],d:HLD.dates[i]};}
+    if(!hit&&!q)continue;
+    const last=c[L-1];res.push({k,val:VAL?VAL[k]:NaN,K:K[L-1],D:D[L-1],hit,close:last,chg:(last/(c[Math.max(0,L-6)]||last)-1)*100,date:HLD.dates[L-1]});}
+  res.sort((a,b)=>(a.hit?a.K:999)-(b.hit?b.K:999)||(isFinite(b.val)?b.val:-1)-(isFinite(a.val)?a.val:-1));
+  const lab={k:`%K ≤ ${fmt(th)}`,kd:`%K & %D ≤ ${fmt(th)}`,gc:'golden cross oversold'}[mode];
+  $('s-res').textContent=q?`Hasil pencarian "${q}": ${res.length} saham`:`${res.length} saham (${lab}) dari ${total} saham`;
+  $('s-list').innerHTML=res.length?res.map(r=>`<div class="card rcard"><div class="rt"><div class="tk">${esc(r.k)}</div><div class="nm">${fmt(r.close,0)}<br><span class="${r.chg<0?'r':'g'}">${r.chg>0?'+':''}${fmt(r.chg)}%</span></div>
+    <div class="rr"><small>%K kini</small><b class="${r.K<=th?'r':''}">${fmt(r.K,1)}</b></div>
+    <div class="rr"><small>%D kini</small><b class="${r.D<=th?'r':''}">${fmt(r.D,1)}</b></div>
+    <div class="rr"><small>Sinyal</small><b>${r.hit?(mode==='gc'?'Golden cross':'Oversold'):'–'}</b></div>
+    <div class="rr"><small>Tanggal</small><b>${r.hit?tgl(r.hit.d):'–'}</b></div>
+    ${isFinite(r.val)?`<div class="rr"><small>Nilai 5h</small><b>Rp ${rupiah(r.val)}</b></div>`:''}</div></div>`).join('')
+    :`<div class="empty">${q?`Saham "${esc(q)}" tidak ditemukan atau nilai transaksinya di bawah filter.`:'Tidak ada saham yang memenuhi kriteria ini.'}</div>`;}
+['s-k','s-ks','s-ds','s-th','s-mode','s-look','s-val','s-q'].forEach(id=>$(id).addEventListener('input',renderStoch));
+async function loadHL(){HLD=await getJSON('data/hl.json');if(HLD&&HLD.high&&Object.keys(HLD.high).length){banner('stoch','auto',`<b>● Otomatis</b> · ${Object.keys(HLD.high).length} saham · data s.d. <b>${tgl(HLD.dates.at(-1))}</b>`);}else{HLD=null;$('b-stoch').classList.remove('auto');$('b-stoch').innerHTML='<b>Data belum siap.</b> Harga tertinggi/terendah akan terisi otomatis setelah robot berjalan.';}renderStoch();}
 let HC=null,HCsrc=null;
 function renderHarm(){if(!PRC||!$('h-list'))return;
   if(HCsrc!==PRC){const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));HC={};
@@ -1127,7 +1185,7 @@ const HELP={
  fund:{t:'Impor data fundamental',h:`<p><code>Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap</code><br>ROE & DY dalam %, MCap dalam triliun Rp.</p>`,
    ph:'Kode,Nama,Sektor,Harga,PER,PBV,ROE,DY,DER,MCap',demo:()=>DEMO_FUND,key:'idx_scr'}};
 let cur='broker';const M=$('modal'),msg=$('msg');
-const BAN={broker:'b-akum',price:'b-rsi',fund:'b-fund'},DEMOHTML={};for(const k in BAN)DEMOHTML[k]=$(BAN[k]).innerHTML;
+const BAN={broker:'b-akum',price:'b-rsi',fund:'b-fund',stoch:'b-stoch'},DEMOHTML={};for(const k in BAN)DEMOHTML[k]=$(BAN[k]).innerHTML;
 function banner(t,mode,html){const b=$(BAN[t]);b.style.display=mode==='manual'?'none':'';b.classList.toggle('auto',mode==='auto');b.innerHTML=mode==='auto'?html:DEMOHTML[t];}
 function setDS(t,txt,demo){banner(t,demo?'demo':'manual');
   if(t==='broker'){BRK=parseBroker(txt);BRK_DAYS=null;brkDemo=demo;renderAkum();}
@@ -1274,7 +1332,7 @@ async function loadAuto(){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
       for(let i=a.length-1;i>=0;i--)if(a[i]!=null){lastClose[k]=a[i];break;}}
     if(rows.length){PRC=rows;VAL=P.value5d||null;prcDemo=false;
-      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();renderHarm();try{renderAstro()}catch(e){}}
+      banner('price','auto',`<b>● Otomatis</b> · ${Object.keys(P.close).length} saham · data s.d. <b>${tgl(P.dates.at(-1))}</b><br><span class="nm">Diperbarui ${esc(P.updated||'')} · Yahoo Finance</span>`);renderRSI();renderHarm();try{renderAstro()}catch(e){}loadHL();}
   }
   if(F&&F.data&&Object.keys(F.data).length&&Object.keys(lastClose).length){
     const rows=[];for(const k in F.data){const f=F.data[k],h=lastClose[k];if(!h)continue;
