@@ -320,6 +320,48 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 :root[data-style="futur"] button:active{transform:none}
 :root[data-style="futur"] .logo{transform:none}
 :root[data-style="futur"] body::before{transform:perspective(420px) rotateX(62deg)}
+/* ================= TEMA GONJRENG (flat, tanpa 3D) ================= */
+:root[data-style="futur"]{--neon:#00d8ff;--neon2:#ff3d9a;--vio:#7c5cff;--bg:#0a0720;--card:#14103a;--card2:#1e1752;--glass:#14103a;--glass2:#1e1752;--bd:#34298a;--edge:#34298a;--tx:#f6f3ff;--mut:#aaa2e6;--ac:#27f0a0;--rd:#ff4d6d;--bl:#7c5cff;--yl:#ffd23f}
+:root[data-style="futur"][data-theme="light"]{--neon:#0aa3d6;--neon2:#e0287f;--vio:#6a45f0;--bg:#f4f1ff;--card:#ffffff;--card2:#efeaff;--glass:#ffffff;--glass2:#efeaff;--bd:#d6ccff;--edge:#d6ccff;--tx:#1a1240;--mut:#6a5fa8;--ac:#0fa968;--rd:#e0314f;--bl:#6a45f0;--yl:#b8860b}
+:root[data-style="futur"] html,:root[data-style="futur"] body{background:var(--bg)}
+:root[data-style="futur"] body{background:
+  radial-gradient(800px 480px at 90% -10%,color-mix(in srgb,var(--neon2) 26%,transparent),transparent 62%),
+  radial-gradient(700px 480px at -10% 20%,color-mix(in srgb,var(--vio) 30%,transparent),transparent 60%),
+  radial-gradient(600px 420px at 55% 115%,color-mix(in srgb,var(--neon) 20%,transparent),transparent 60%),var(--bg);background-attachment:fixed}
+:root[data-style="futur"] body::before{display:none}
+:root[data-style="futur"] header{background:color-mix(in srgb,var(--bg) 88%,transparent);border-bottom:2px solid transparent;border-image:linear-gradient(90deg,var(--neon),var(--vio),var(--neon2)) 1;box-shadow:none}
+:root[data-style="futur"] .logo{background:linear-gradient(135deg,var(--neon),var(--vio) 55%,var(--neon2));box-shadow:none;transform:none;border-radius:12px}
+:root[data-style="futur"] .logo svg{filter:none}
+:root[data-style="futur"] h1{background:linear-gradient(90deg,var(--neon),var(--vio) 55%,var(--neon2));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+:root[data-style="futur"] .sub{color:var(--mut)}
+:root[data-style="futur"] .tab{border-radius:12px;font-weight:650}
+:root[data-style="futur"] .tab:hover{background:var(--card2);transform:none}
+:root[data-style="futur"] .tab.on{color:#fff;background:linear-gradient(90deg,var(--vio),var(--neon2));box-shadow:none}
+:root[data-style="futur"] .box,:root[data-style="futur"] .card,:root[data-style="futur"] details,:root[data-style="futur"] .sheet{
+  background:var(--card);border:1px solid var(--bd);border-radius:14px;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+:root[data-style="futur"] .card{transform:none!important;overflow:hidden}
+:root[data-style="futur"] .card::before{display:block;content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--neon),var(--vio),var(--neon2));opacity:1}
+:root[data-style="futur"] .card::after{display:none}
+:root[data-style="futur"] .card:hover{border-color:var(--vio);box-shadow:none}
+:root[data-style="futur"] .card .tk,:root[data-style="futur"] .card .rr b,:root[data-style="futur"] .card .px{transform:none;text-shadow:none}
+:root[data-style="futur"] .box>h3:first-child,:root[data-style="futur"] .box h3{color:var(--tx)}
+:root[data-style="futur"] .box{border-left:4px solid var(--vio)}
+:root[data-style="futur"] input,:root[data-style="futur"] select,:root[data-style="futur"] textarea{background:var(--card2);border:1.5px solid var(--bd);border-radius:11px;box-shadow:none}
+:root[data-style="futur"] input:focus,:root[data-style="futur"] select:focus,:root[data-style="futur"] textarea:focus{border-color:var(--neon);box-shadow:0 0 0 3px color-mix(in srgb,var(--neon) 25%,transparent)}
+:root[data-style="futur"] button{background:var(--card2);border:1.5px solid var(--bd);border-radius:11px;box-shadow:none}
+:root[data-style="futur"] button:hover{border-color:var(--vio)}
+:root[data-style="futur"] button:active{transform:none;box-shadow:none}
+:root[data-style="futur"] button.pri{background:linear-gradient(90deg,var(--vio),var(--neon2));border:none;color:#fff;box-shadow:none}
+:root[data-style="futur"] .seg{background:var(--card2);border:1.5px solid var(--bd);box-shadow:none}
+:root[data-style="futur"] .seg button{border:none;background:none;box-shadow:none}
+:root[data-style="futur"] .seg button.on{background:linear-gradient(90deg,var(--vio),var(--neon2));color:#fff;box-shadow:none}
+:root[data-style="futur"] .chip.on,:root[data-style="futur"] .bchip{background:linear-gradient(90deg,var(--vio),var(--neon2));color:#fff;border-color:transparent;box-shadow:none}
+:root[data-style="futur"] .banner,:root[data-style="futur"] .banner.auto{background:var(--card2);border:1.5px solid var(--bd);backdrop-filter:none}
+:root[data-style="futur"] .banner.auto b{color:var(--ac)}
+:root[data-style="futur"] .st,:root[data-style="futur"] .bsum,:root[data-style="futur"] .rsif,:root[data-style="futur"] .achip{background:var(--card2);border:1px solid var(--bd);border-radius:11px;box-shadow:none}
+:root[data-style="futur"] .st b{color:var(--tx)}
+:root[data-style="futur"] .themebtn{box-shadow:none}
+:root[data-style="futur"] .pill{font-weight:800}
 </style>
 </head>
 <body>
