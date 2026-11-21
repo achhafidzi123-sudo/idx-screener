@@ -219,6 +219,7 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
     <button class="tab" data-t="harm">🔷 Harmonik</button>
     <button class="tab" data-t="astro">🌙 Astronacci</button>
+    <button class="tab" data-t="news">📰 Berita</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -309,6 +310,14 @@ footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-si
   </div>
   <div class="meta" id="h-meta"><span id="h-res"></span></div>
   <div id="h-list"></div>
+</section>
+
+<section class="pane" id="p-news">
+  <div class="box"><h3>Berita pasar terbaru</h3>
+    <div class="seg" id="n-seg"><button data-nf="all" class="on">Semua</button><button data-nf="b">🟢 Baik</button><button data-nf="k">🔴 Buruk</button><button data-nf="n">⚪ Netral</button></div>
+    <input id="n-q" placeholder="Cari kata / kode saham, mis. BBCA" style="width:100%;margin-bottom:8px">
+    <div class="nm" id="n-stat" style="line-height:1.55">Memuat…</div></div>
+  <div id="n-list"></div>
 </section>
 
 <section class="pane" id="p-astro">
@@ -887,8 +896,37 @@ $('demo').onclick=()=>{store(HELP[cur].key,null);const u=$('m-unit');if(u)u.valu
 function placeTabs(){const n=document.getElementById('tabs'),h=document.querySelector('header');
   if(matchMedia('(min-width:900px)').matches){if(n.parentNode===h)h.after(n);}else if(n.parentNode!==h)h.appendChild(n);}
 placeTabs();addEventListener('resize',placeTabs);
+
+/* ===== Berita ===== */
+const NEWS_URL='https://snowy-cake-3209.ach-hafidzi123.workers.dev/?berita=1';
+const NW_POS=['naik','menguat','melonjak','meroket','melesat','menanjak','rekor tertinggi','laba naik','laba melonjak','untung','surplus','tumbuh','pertumbuhan','positif','optimis','optimistis','net buy','akumulasi','dividen','buyback','pulih','rebound','menghijau','cetak laba','kinerja moncer','moncer','investasi masuk','upgrade','diborong','ekspansi','kontrak baru','lampaui target','kenaikan','reli','cerah','stimulus','pemangkasan bunga','suku bunga turun','menguat tipis','ditutup naik','dibuka naik','capai rekor'];
+const NW_NEG=['turun','melemah','anjlok','jeblok','ambles','merosot','terjun','tertekan','koreksi','rugi','merugi','defisit','negatif','pesimis','pesimistis','net sell','distribusi','suspensi','disuspensi','delisting','gagal bayar','pailit','pkpu','kebangkrutan','korupsi','sanksi','denda','phk','krisis','resesi','inflasi tinggi','menukik','memerah','dilepas','aksi jual','jual bersih','downgrade','terburuk','kejatuhan','tekanan jual','ditutup turun','dibuka turun','bunga naik','suku bunga naik','waswas','cemas','ancaman','bencana','tersungkur','gugatan','sengketa','penipuan','dihentikan','ditutup melemah','dibuka melemah','penurunan','kebakaran','longsor','default','arb','auto reject bawah','capai terendah'];
+function nwScore(t){const x=' '+t.toLowerCase()+' ';let p=0,n=0;
+  NW_POS.forEach(w=>{if(x.includes(w))p++});NW_NEG.forEach(w=>{if(x.includes(w))n++});
+  /* "menguat tipis/melemah" dsb sudah tercakup; pembalik sederhana */
+  if(/(tak|tidak|belum|gagal)\s+(naik|menguat|tumbuh)/.test(x)){n++;p=Math.max(0,p-1);}
+  if(/(tak|tidak|belum)\s+(turun|melemah|anjlok)/.test(x)){p++;n=Math.max(0,n-1);}
+  return p-n;}
+function nwKls(t){const s=nwScore(t);return s>0?'b':s<0?'k':'n';}
+let NW=[],NW_F='all',NW_T=null,NW_ST=null;
+function nwAgo(ms){const d=Math.max(0,(Date.now()-ms)/1000);if(!ms)return'';if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hr lalu';}
+function renderNews(){const q=($('n-q').value||'').trim().toLowerCase();
+  const rows=NW.filter(i=>(NW_F==='all'||i.c===NW_F)&&(!q||(i.j+' '+i.r).toLowerCase().includes(q)));
+  const cnt={b:0,k:0,n:0};NW.forEach(i=>cnt[i.c]++);
+  const ok=(NW_ST||[]).filter(s=>s.ok),bad=(NW_ST||[]).filter(s=>!s.ok);
+  $('n-stat').innerHTML=NW.length?`${NW.length} berita · 🟢 ${cnt.b} · 🔴 ${cnt.k} · ⚪ ${cnt.n} · diperiksa ulang tiap 1 menit<br>Sumber aktif: ${ok.map(s=>esc(s.nama)).join(', ')||'-'}${bad.length?`<br><span class="r">Sumber tidak terjangkau: ${bad.map(s=>esc(s.nama)).join(', ')}</span>`:''}<br><span class="nm">Klasifikasi memakai daftar kata kunci sederhana pada judul/ringkasan, bukan analisis mendalam, jadi bisa meleset. Bukan saran investasi.</span>`:'Memuat…';
+  $('n-list').innerHTML=rows.length?rows.map(i=>`<a class="box" href="${esc(i.u)}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;border-left:4px solid ${i.c==='b'?'#22c55e':i.c==='k'?'#ef4444':'#64748b'}">
+    <div class="nm">${i.c==='b'?'🟢 Berita baik':i.c==='k'?'🔴 Berita buruk':'⚪ Netral'} · ${esc(i.s)} · ${nwAgo(i.t)}</div>
+    <div style="font-weight:700;margin:4px 0">${esc(i.j)}</div>${i.r?`<div class="nm" style="line-height:1.5">${esc(i.r)}</div>`:''}</a>`).join(''):`<div class="empty">${NW.length?'Tidak ada berita yang cocok.':'Belum ada berita. Jembatan Cloudflare belum diperbarui atau belum bisa dijangkau.'}</div>`;}
+async function loadNews(){try{const r=await fetch(NEWS_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
+    NW_ST=j.sumber||[];NW=(j.items||[]).map(i=>({...i,c:nwKls(i.j+' '+(i.r||''))}));}
+  catch(e){if(!NW.length)$('n-stat').innerHTML='<span class="r">Belum bisa mengambil berita. Kode jembatan Cloudflare perlu diperbarui (lihat panduan dari Claude).</span>';return;}
+  renderNews();}
+function newsTimer(){clearInterval(NW_T);if(document.querySelector('.tab.on')?.dataset.t==='news'){loadNews();NW_T=setInterval(()=>{if(!document.hidden)loadNews()},60000);}}
+document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
+$('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();});
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();

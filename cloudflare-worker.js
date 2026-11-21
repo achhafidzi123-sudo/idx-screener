@@ -25,9 +25,45 @@ function mmddyyyy(d) {
   return String(d.getUTCMonth() + 1).padStart(2, "0") + "/" + String(d.getUTCDate()).padStart(2, "0") + "/" + d.getUTCFullYear();
 }
 
+// ---- Berita pasar (RSS) ----
+const FEEDS = {
+  "Antara Bursa": "https://www.antaranews.com/rss/ekonomi-bursa.xml",
+  "Antara Ekonomi": "https://www.antaranews.com/rss/ekonomi.xml",
+  "CNBC Indonesia": "https://www.cnbcindonesia.com/market/rss",
+  "Kontan": "https://investasi.kontan.co.id/rss",
+  "Bisnis": "https://market.bisnis.com/rss",
+  "Detik Finance": "https://rss.detik.com/index.php/finance",
+};
+const CORS = { "access-control-allow-origin": "*" };
+const dekode = (x) => x.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ")
+  .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'")
+  .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const tag = (b, n) => { const m = b.match(new RegExp("<" + n + "[^>]*>([\\s\\S]*?)</" + n + ">", "i")); return m ? dekode(m[1]) : ""; };
+async function beritaSatu(nama, url) {
+  try {
+    const r = await fetch(url, { headers: HEADERS, cf: { cacheTtl: 30 } });
+    if (!r.ok) return { nama, ok: false, status: r.status, items: [] };
+    const x = await r.text();
+    const items = (x.match(/<item[\s>][\s\S]*?<\/item>/gi) || []).slice(0, 25).map((b) => {
+      const l = (b.match(/<link[^>]*>([\s\S]*?)<\/link>/i) || [])[1] || "";
+      const t = Date.parse(tag(b, "pubDate") || tag(b, "dc:date"));
+      return { j: tag(b, "title"), u: dekode(l), r: tag(b, "description").slice(0, 220), t: isNaN(t) ? 0 : t, s: nama };
+    }).filter((i) => i.j && i.u);
+    return { nama, ok: items.length > 0, status: r.status, items };
+  } catch (e) { return { nama, ok: false, status: 0, items: [] }; }
+}
+
 export default {
   async fetch(request) {
     const u = new URL(request.url);
+
+    if (u.searchParams.get("berita")) {
+      const hasil = await Promise.all(Object.entries(FEEDS).map(([n, f]) => beritaSatu(n, f)));
+      const items = hasil.flatMap((h) => h.items).sort((a, b) => b.t - a.t).slice(0, 150);
+      const sumber = hasil.map((h) => ({ nama: h.nama, ok: h.ok, status: h.status, jumlah: h.items.length }));
+      return new Response(JSON.stringify({ waktu: Date.now(), sumber, items }),
+        { headers: { ...CORS, "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=30" } });
+    }
 
     // Mode cek: coba ambil broker summary BBCA hari bursa terakhir
     if (u.searchParams.get("cek")) {
