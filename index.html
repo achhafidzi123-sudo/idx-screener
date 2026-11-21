@@ -204,6 +204,54 @@ table.bst{width:100%;border-collapse:collapse;font-size:12.5px}
 .rsif{display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(0,150,224,.1);border:1px solid var(--bd);flex-wrap:wrap}
 footer.ft{position:relative;z-index:1;text-align:center;color:var(--mut);font-size:11.5px;padding:10px 14px 40px}
 .tab[hidden]{display:none!important}
+/* ================= TEMA MINIMALIS ================= */
+:root{--bg:#0c0e12;--card:#14171c;--card2:#1a1e24;--tx:#e9ecf1;--mut:#7f8896;--bd:#242932;--ac:#3ecf8e;--rd:#f26b6b;--bl:#4c9aff;--yl:#e6c35c;
+  --doraemon:#4c9aff;--dora2:#4c9aff;--dora-dk:#4c9aff;--glow:none}
+@media (prefers-color-scheme: light){:root{--bg:#f6f7f9;--card:#fff;--card2:#f0f2f5;--tx:#15181d;--mut:#6b7380;--bd:#e3e6eb;--ac:#12a05c;--rd:#d94646;--bl:#2f7de1;--yl:#b8901a;--doraemon:#2f7de1;--dora2:#2f7de1;--dora-dk:#2f7de1}}
+html,body{background:var(--bg)}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;letter-spacing:0;background:var(--bg);background-attachment:scroll;font-size:14.5px}
+body::before{display:none}
+header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:1px solid var(--bd);padding:16px 16px 10px}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--bl);box-shadow:none}
+.logo svg{width:18px;height:18px}
+h1{font-family:'Inter',sans-serif;font-size:17px;font-weight:650;background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--tx);letter-spacing:-.2px}
+.sub{text-transform:none;letter-spacing:0;font-size:12px}
+.live{animation:none;box-shadow:none;width:6px;height:6px}
+.brand{margin-bottom:10px;gap:10px}
+.tabs{background:none;border:none;border-radius:0;padding:0;gap:2px}
+.tab{border-radius:8px;padding:8px 10px;font-size:13px;font-weight:550;color:var(--mut);background:none;transition:color .15s,background .15s}
+.tab:hover{color:var(--tx);background:var(--card2)}
+.tab.on{color:var(--tx);background:var(--card2);box-shadow:none}
+main{padding-top:18px}
+.box,.card,details,.sheet{background:var(--card);border:1px solid var(--bd);border-radius:12px;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+.card{transition:border-color .15s}.card::before{display:none}
+.card:hover{transform:none;border-color:var(--mut);box-shadow:none}
+.box h3,.card h3{font-family:'Inter',sans-serif;letter-spacing:0;font-weight:650}
+.tk{font-family:'Inter',sans-serif;letter-spacing:0;font-weight:650;font-size:17px}
+.st{background:var(--card2);border:none;border-radius:8px}
+.st small{letter-spacing:.3px}
+input,select,textarea{background:var(--card2);border:1px solid var(--bd);border-radius:9px;box-shadow:none}
+input:focus,select:focus,textarea:focus{border-color:var(--bl);box-shadow:none}
+#c-q{background:var(--card2);border-radius:10px;font-size:16px;padding:12px 14px}
+button{background:var(--card2);border:1px solid var(--bd);border-radius:9px;transition:border-color .15s,background .15s}
+button:hover{border-color:var(--mut)}
+button.pri{background:var(--bl);border:1px solid var(--bl);color:#fff;font-weight:600;box-shadow:none}
+button.pri:hover{filter:none;transform:none;opacity:.9}
+.chip.on,.bchip{background:var(--bl);color:#fff;border-color:var(--bl);box-shadow:none}
+.bchip.sug{background:var(--card2);color:var(--tx);border:1px solid var(--bd)}
+.bchip.sug:hover{border-color:var(--mut);background:var(--card2)}
+.seg{background:var(--card2);border:none;border-radius:10px;padding:3px}
+.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 0 0 1px var(--bd)}
+.banner,.banner.auto{background:var(--card2);border:1px solid var(--bd);border-radius:10px;backdrop-filter:none;font-size:12.5px}
+.banner.auto b{color:var(--ac)}
+.bsum,.rsif,.achip{background:var(--card2);border:none;border-radius:9px}
+.bars i{background:var(--ac)}.bars i.off{background:var(--bd)}
+.bst td{border-bottom-color:var(--bd)}
+.modal{background:rgba(0,0,0,.5);backdrop-filter:none}
+::selection{background:rgba(76,154,255,.35)}
+::-webkit-scrollbar-thumb{background:var(--bd)}
+.pane.on{animation:none}
+.tab[hidden]{display:none!important}
 </style>
 </head>
 <body>
