@@ -386,9 +386,9 @@ a.btn{display:inline-block;padding:8px 12px;border-radius:10px;background:var(--
 /* ---- Perbaikan tampilan HP ---- */
 html,body{max-width:100%;overflow-x:hidden}
 @media(max-width:700px){
-nav.tabs{display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:100%;padding:0 10px;gap:2px;border-bottom:1px solid var(--bd)}
-nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs .tab{flex:0 0 auto;padding:10px 12px;font-size:13.5px}
+nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;overflow:visible;max-width:100%;padding:10px 12px;border-bottom:1px solid var(--bd)}
+nav.tabs .tab{flex:none;min-width:0;padding:6px 2px;font-size:12px;line-height:1.2;min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;word-break:keep-all;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+nav.tabs .tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .pane,.box,.card,.row,.fgrid,.agrid{min-width:0;max-width:100%;box-sizing:border-box}
 input,select,textarea{max-width:100%;min-width:0;box-sizing:border-box}
 .fgrid{grid-template-columns:1fr 1fr!important}
