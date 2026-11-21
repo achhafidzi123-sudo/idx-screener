@@ -395,7 +395,7 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 </header>
 <nav class="tabs" id="tabs">
     <button class="tab on" data-t="cari">🔍 Cari</button>
-    <button class="tab" data-t="akum" id="tab-akum" hidden>🏦 Akumulasi</button>
+    <button class="tab" data-t="akum" id="tab-akum">🏦 Akumulasi</button>
     <button class="tab" data-t="rsi">📉 RSI ≤ 20</button>
     <button class="tab" data-t="harm">🔷 Harmonik</button>
     <button class="tab" data-t="astro">🌙 Astronacci</button>
@@ -416,7 +416,7 @@ button.pri:hover{filter:none;transform:none;opacity:.9}
 </section>
 
 <section class="pane" id="p-akum">
-  <div class="banner" id="b-akum"><b>Menunggu data broker.</b> Data broker summary akan muncul di sini secara otomatis setelah jembatan Cloudflare aktif. Tidak perlu impor apa pun.</div>
+  <div class="banner" id="b-akum"><b>Data broker belum tersedia.</b> Sumber gratis (IPOT) sedang tidak bisa diakses, jadi daftar saham yang diakumulasi belum bisa ditampilkan. Fitur di bawah (semua broker / broker tertentu / filter RSI opsional) sudah siap dan terisi otomatis begitu ada sumber data broker per saham.</div>
   <div class="seg" id="a-seg"><button data-am="all" class="on">👥 Semua broker</button><button data-am="pick">🎯 Broker tertentu</button></div>
   <div class="box" id="a-pickbox" style="display:none">
     <h3>Pilih broker yang dipantau</h3>
@@ -662,7 +662,7 @@ function renderAkum(){rsiInfo();if(!BRK){
     $('a-bkchips').innerHTML=AK_PICK.length?AK_PICK.map(c=>brokerChip(c,'',' ✕')).join(''):'<span class="nm">Belum ada broker dipilih.</span>';
     document.querySelectorAll('#a-seg button').forEach(b=>b.classList.toggle('on',b.dataset.am===AK_MODE));
     $('a-pickbox').style.display=AK_MODE==='pick'?'':'none';$('a-topbox').style.display=AK_MODE==='pick'?'none':'';
-    $('a-list').innerHTML='<div class="empty">⏳ Data broker summary belum tersedia.<br>Akan terisi otomatis setiap hari bursa setelah jembatan Cloudflare aktif.</div>';return;}const rsiOn=$('a-rsion').checked,rth=num($('a-rsi').value),R=rsiNow(),lastP=rsiInfo();
+    $('a-list').innerHTML='<div class="empty">⏳ Data broker per saham belum tersedia, jadi belum ada daftar saham.<br>Pilihan broker dan filter di atas sudah siap dan akan langsung berfungsi begitu data masuk.</div>';return;}const rsiOn=$('a-rsion').checked,rth=num($('a-rsi').value),R=rsiNow(),lastP=rsiInfo();
   const all=analyzeAkum().filter(r=>{if(!rsiOn)return true;const x=R[r.k];return x&&x.d===lastP&&x.v<=rth;}).map(r=>({...r,rsi:R[r.k]})),lbl=$('a-mode').value==='net'?'net buy':'beli',q=$('a-q').value.trim().toUpperCase();
   const pick=AK_MODE==='pick';
   document.querySelectorAll('#a-seg button').forEach(b=>b.classList.toggle('on',b.dataset.am===AK_MODE));
@@ -1182,7 +1182,7 @@ buildFilters();drawChips();
 try{['idx_brk','idx_brk_u','idx_prc','idx_scr'].forEach(k=>localStorage.removeItem(k))}catch(e){}
 renderAkum();
 banner('price','demo');banner('fund','demo');
-const lt=load('idx_tab');if(lt&&lt!=='akum')document.querySelector(`.tab[data-t="${lt}"]`)?.click();
+const lt=load('idx_tab');if(lt)document.querySelector(`.tab[data-t="${lt}"]`)?.click();
 
 /* ======================= DATA OTOMATIS (diperbarui robot GitHub tiap hari bursa) ======================= */
 async function getJSON(u){try{const r=await fetch(u+'?v='+Date.now(),{cache:'no-store'});return r.ok?await r.json():null}catch(e){return null}}
@@ -1190,8 +1190,7 @@ async function loadAuto(){
   const [P,F,B,U]=await Promise.all([getJSON('data/prices.json'),getJSON('data/fundamentals.json'),getJSON('data/broker.json'),getJSON('data/universe.json')]);
   if(U&&U.tickers)UNIV=U.tickers;
   BS_INDEX=await getJSON('data/bs/index.json');
-  {const tb=document.getElementById('tab-akum');if(tb)tb.hidden=!((B&&(B.length||(B.rows||[]).length))||(BS_INDEX&&(BS_INDEX.days||[]).length));}
-  let lastClose={};
+    let lastClose={};
   if(P&&P.dates&&P.dates.length&&P.close){
     const rows=[];for(const k in P.close){const a=P.close[k];a.forEach((c,i)=>{if(c!=null)rows.push({d:P.dates[i],k,c:+c})});
       for(let i=a.length-1;i>=0;i--)if(a[i]!=null){lastClose[k]=a[i];break;}}
