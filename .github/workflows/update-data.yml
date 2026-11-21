@@ -35,7 +35,7 @@ jobs:
       - name: Ambil data semua saham IDX
         env:
           INDEXALPHA_TOKEN: ${{ secrets.INDEXALPHA_TOKEN }}
-          IPOT_PROXY: ""   # alamat jembatan Cloudflare Worker
+          IPOT_PROXY: "https://snowy-cake-3209.ach-hafidzi123.workers.dev/"   # jembatan Cloudflare Worker
         run: python scripts/update.py
 
       - name: Simpan data ke repository
