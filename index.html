@@ -2,9 +2,6 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0ea5e9">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Screener By Afi Cuy</title>
 <meta name="theme-color" content="#040B1A">
@@ -450,10 +447,6 @@ body.menu-open #menubg{display:block;position:fixed;inset:0;z-index:55;backgroun
     <button class="tab" data-t="analisa">🧭 Analisa</button>
     <button class="tab" data-t="pakar">🧠 Pakar</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
-    <button class="tab" data-t="pantau">⭐ Pantau</button>
-    <button class="tab" data-t="peta">🗺️ Peta Sektor</button>
-    <button class="tab" data-t="kal">📅 Kalender</button>
-    <button class="tab" data-t="glos">📖 Glosarium</button>
   </nav>
 
 <main>
@@ -644,7 +637,6 @@ body.menu-open #menubg{display:block;position:fixed;inset:0;z-index:55;backgroun
 </section>
 
 <section class="pane" id="p-fund">
-  <div id="fsec"></div>
   <div class="banner" id="b-fund"><b>Memuat data…</b> Data fundamental diambil otomatis. Jika pesan ini tidak hilang, muat ulang halaman.</div>
   <div class="row" style="margin-bottom:6px">
     <input type="search" id="q" placeholder="Cari kode / nama…">
@@ -668,35 +660,6 @@ body.menu-open #menubg{display:block;position:fixed;inset:0;z-index:55;backgroun
   <div id="list"></div>
 </section>
 <p class="nm" style="text-align:center;margin-top:20px">Alat bantu penyaringan, bukan rekomendasi beli/jual. Selalu lakukan riset sendiri.</p>
-<section class="pane" id="p-pantau">
-  <div class="box"><h3>Daftar pantau</h3>
-    <div class="nm" style="line-height:1.55">Simpan saham favorit Anda, lihat sinyal Analisa terbarunya, dan pasang harga peringatan. Daftar ini disimpan di browser HP/komputer Anda.</div>
-    <div class="row" style="gap:6px;margin-top:8px"><input type="search" id="w-k" placeholder="Kode saham, misal BBCA" style="text-transform:uppercase"><button id="w-add" type="button">Tambah</button></div>
-    <div class="row" style="gap:6px;margin-top:8px"><button id="w-perm" type="button">🔔 Aktifkan notifikasi</button></div>
-    <div class="nm" id="w-stat" style="margin-top:8px;line-height:1.5"></div></div>
-  <div id="w-list"></div>
-  <div class="box nm" style="line-height:1.55"><b>Catatan:</b> harga di website diperbarui otomatis sekali setiap hari bursa, jadi peringatan harga dicek saat halaman dibuka. Notifikasi hanya muncul jika browser mengizinkan dan halaman sedang terbuka. Ini bukan alarm real-time.</div>
-</section>
-
-<section class="pane" id="p-peta">
-  <div class="box"><h3>Peta sektor (perubahan harga 1 hari)</h3>
-    <div class="nm" id="pe-stat" style="line-height:1.55">Memuat…</div></div>
-  <div id="pe-list"></div>
-  <div class="box nm" style="line-height:1.55"><b>Aliran asing (beli/jual bersih) belum tersedia</b> di website ini, karena belum ada sumber data gratis yang andal. Data ini bisa dilihat langsung di situs resmi IDX atau aplikasi sekuritas Anda.</div>
-</section>
-
-<section class="pane" id="p-kal">
-  <div class="box"><h3>Kalender aksi korporasi</h3>
-    <div class="nm" id="kal-stat" style="line-height:1.55">Memuat…</div>
-    <div class="nm" style="margin-top:6px;line-height:1.55">Daftar ini dari <b>berita</b> (7–14 hari terakhir). Ini bukan jadwal resmi. Pastikan tanggal dan detailnya di <a href="https://www.idx.co.id" target="_blank" rel="noopener">situs resmi IDX</a> sebelum mengambil keputusan.</div></div>
-  <div id="kal-list"></div>
-</section>
-
-<section class="pane" id="p-glos">
-  <div class="box"><h3>Glosarium pemula</h3>
-    <input type="search" id="g-q" placeholder="Cari istilah…" style="width:100%;margin-top:8px"></div>
-  <div id="g-list"></div>
-</section>
 </main>
 
 <div class="modal" id="modal">
@@ -1779,137 +1742,6 @@ async function loadAuto(){
   }
 }
 loadAuto().then(()=>{renderCari();renderAkum();});
-
-/* ===== Pantau, Peta Sektor, Kalender, Glosarium, perbandingan sektor ===== */
-const W_KEY='idx_watch';
-function wLoad(){try{return JSON.parse(localStorage.getItem(W_KEY)||'[]')}catch(e){return[]}}
-function wSave(a){store(W_KEY,JSON.stringify(a))}
-function wClose(k){const a=priceIndex()[k]||[];return a.length?a:null}
-function renderWatch(){
-  const PI=priceIndex(),list=wLoad(),today=PRC&&PRC.length?PRC.reduce((m,r)=>r.d>m?r.d:m,''):'–';
-  if(!list.length){$('w-list').innerHTML='<div class="empty">Belum ada saham di daftar pantau. Ketik kode saham lalu tekan Tambah.</div>';$('w-stat').textContent='';return;}
-  let trig=0;
-  $('w-list').innerHTML=list.map(w=>{
-    const a=wClose(w.k),last=a?a.at(-1)[1]:NaN,prev=a&&a.length>1?a.at(-2)[1]:NaN;
-    const chg=isFinite(prev)&&prev>0?(last/prev-1)*100:NaN;
-    const cl=a?a.map(x=>x[1]):[];
-    const sg=cl.length>=60?skorGabung(cl):NaN;
-    const sigTxt=isFinite(sg)?(sg>=2?'🟢 Positif':sg<=-2?'🔴 Negatif':'⚪ Netral')+' ('+sg+')':'–';
-    let al='';
-    if(isFinite(last)){
-      if(w.up&&last>=w.up){al='🔔 Harga ≥ '+fmt(w.up,0);trig++;}
-      if(w.dn&&last<=w.dn){al='🔔 Harga ≤ '+fmt(w.dn,0);trig++;}
-    }
-    return `<div class="card"><div class="top"><div><div class="tk">${esc(w.k)}</div><div class="nm">${esc(UNIV[w.k]||'')}</div></div>
-      <div class="px">${isFinite(last)?'Rp '+fmt(last,0):'–'}<br><span class="nm ${chg>=0?'g':'r'}">${isFinite(chg)?(chg>=0?'+':'')+fmt(chg,2)+'%':''}</span></div></div>
-      <div class="nm" style="margin-top:6px">Sinyal skor: <b>${sigTxt}</b> ${al?'· <b>'+al+'</b>':''}</div>
-      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">
-        <label class="nm">Naik ke <input type="number" data-wup="${esc(w.k)}" value="${w.up||''}" style="width:110px"></label>
-        <label class="nm">Turun ke <input type="number" data-wdn="${esc(w.k)}" value="${w.dn||''}" style="width:110px"></label>
-        <button type="button" data-wrm="${esc(w.k)}">Hapus</button></div></div>`;}).join('');
-  $('w-stat').textContent=list.length+' saham dipantau'+(trig?' · '+trig+' peringatan harga tercapai':'')+'. Data harga per '+today+'.';
-  if(trig&&'Notification' in window&&Notification.permission==='granted'){
-    list.forEach(w=>{const a=wClose(w.k);if(!a)return;const last=a.at(-1)[1];
-      const hit=(w.up&&last>=w.up)||(w.dn&&last<=w.dn);const key='idx_wn_'+w.k+'_'+today;
-      if(hit&&!localStorage.getItem(key)){store(key,'1');try{new Notification('Peringatan harga '+w.k,{body:'Harga terakhir Rp '+fmt(last,0)});}catch(e){}}});}
-}
-$('w-add').onclick=()=>{const k=($('w-k').value||'').trim().toUpperCase();if(!k)return;
-  const a=wLoad();if(!a.some(x=>x.k===k))a.push({k});wSave(a);$('w-k').value='';renderWatch();};
-$('w-k').addEventListener('keydown',e=>{if(e.key==='Enter')$('w-add').click();});
-$('w-perm').onclick=async()=>{if(!('Notification' in window)){$('w-stat').textContent='Browser ini tidak mendukung notifikasi.';return;}
-  const r=await Notification.requestPermission();$('w-stat').textContent=r==='granted'?'Notifikasi aktif.':'Notifikasi tidak diizinkan.';renderWatch();};
-$('w-list').addEventListener('change',e=>{const t=e.target,a=wLoad();
-  if(t.dataset.wup){const w=a.find(x=>x.k===t.dataset.wup);if(w){w.up=num(t.value)||null;wSave(a);renderWatch();}}
-  if(t.dataset.wdn){const w=a.find(x=>x.k===t.dataset.wdn);if(w){w.dn=num(t.value)||null;wSave(a);renderWatch();}}});
-$('w-list').addEventListener('click',e=>{const b=e.target.closest('[data-wrm]');if(!b)return;wSave(wLoad().filter(x=>x.k!==b.dataset.wrm));renderWatch();});
-
-function renderPeta(){
-  const PI=priceIndex(),sec={};
-  const sektorOf=k=>{const f=(FUND||[]).find(x=>x.kode===k);return f&&f.sektor?f.sektor:'Belum ada sektor';};
-  for(const k in PI){const a=PI[k];if(a.length<2)continue;const chg=(a.at(-1)[1]/a.at(-2)[1]-1)*100;if(!isFinite(chg))continue;
-    const s=sektorOf(k);(sec[s]=sec[s]||[]).push({k,chg});}
-  const names=Object.keys(sec).sort((x,y)=>sec[y].length-sec[x].length);
-  const col=c=>c>=2?'#15803d':c>0?'#86efac':c<=-2?'#b91c1c':c<0?'#fca5a5':'#94a3b8';
-  $('pe-stat').textContent=names.length?Object.keys(PI).length+' saham dengan harga 2 hari terakhir. Warna hijau = naik, merah = turun.':'Data harga belum tersedia.';
-  $('pe-list').innerHTML=names.map(n=>{const m=sec[n].sort((a,b)=>b.chg-a.chg);const avg=m.reduce((t,x)=>t+x.chg,0)/m.length;
-    return `<div class="box"><div class="row" style="justify-content:space-between"><b>${esc(n)}</b><span class="${avg>=0?'g':'r'}">rata-rata ${avg>=0?'+':''}${fmt(avg,2)}% · ${m.length} saham</span></div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${m.slice(0,60).map(x=>`<span style="background:${col(x.chg)};color:#111;padding:4px 7px;border-radius:6px;font-size:12px;font-weight:700">${esc(x.k)} ${x.chg>=0?'+':''}${fmt(x.chg,1)}%</span>`).join('')}</div></div>`;}).join('');
-}
-
-function renderFundSector(){
-  const el=$('fsec');if(!el)return;
-  if(!FUND||!FUND.length){el.innerHTML='';return;}
-  const g={};FUND.forEach(r=>{(g[r.sektor||'Lainnya']=g[r.sektor||'Lainnya']||[]).push(r)});
-  const med=arr=>{const v=arr.filter(x=>isFinite(x)).sort((a,b)=>a-b);if(!v.length)return NaN;const m=v.length>>1;return v.length%2?v[m]:(v[m-1]+v[m])/2;};
-  const rows=Object.keys(g).sort().map(n=>{const x=g[n];return {n,c:x.length,per:med(x.map(r=>r.per).filter(v=>v>0)),pbv:med(x.map(r=>r.pbv).filter(v=>v>0)),roe:med(x.map(r=>r.roe)),der:med(x.map(r=>r.der))};});
-  const all={per:med(FUND.map(r=>r.per).filter(v=>v>0)),pbv:med(FUND.map(r=>r.pbv).filter(v=>v>0)),roe:med(FUND.map(r=>r.roe)),der:med(FUND.map(r=>r.der))};
-  el.innerHTML=`<div class="box"><h3>Perbandingan median per sektor</h3>
-    <div class="nm" style="line-height:1.5;margin-bottom:6px">Median dihitung dari semua saham di tiap sektor. Dipakai sebagai pembanding: saham yang PER-nya jauh di bawah median sektor bisa lebih murah, tapi tetap perlu dicek penyebabnya.</div>
-    <div style="overflow-x:auto"><table style="width:100%;font-size:13px;border-collapse:collapse">
-    <tr><th style="text-align:left">Sektor</th><th>Jml</th><th>PER</th><th>PBV</th><th>ROE%</th><th>DER</th></tr>
-    <tr style="font-weight:700"><td>Pasar (semua)</td><td>${FUND.length}</td><td>${fmt(all.per)}x</td><td>${fmt(all.pbv)}x</td><td>${fmt(all.roe)}</td><td>${fmt(all.der)}x</td></tr>
-    ${rows.map(r=>`<tr><td>${esc(r.n)}</td><td style="text-align:center">${r.c}</td><td style="text-align:center">${fmt(r.per)}x</td><td style="text-align:center">${fmt(r.pbv)}x</td><td style="text-align:center">${fmt(r.roe)}</td><td style="text-align:center">${fmt(r.der)}x</td></tr>`).join('')}
-    </table></div></div>`;
-}
-const _renderFundBase=renderFund;
-renderFund=function(){_renderFundBase();try{renderFundSector()}catch(e){}};
-
-async function loadKal(){
-  $('kal-stat').textContent='Memuat…';
-  const qs=['jadwal dividen saham IDX','RUPS emiten IDX','laporan keuangan emiten IDX','jadwal IPO saham IDX'];
-  const res=await Promise.all(qs.map(q=>nwFeedOne('GN:kal',["https://news.google.com/rss/search?q="+encodeURIComponent(q+' when:14d')+"&hl=id&gl=ID&ceid=ID:id"]).catch(()=>({items:[]}))));
-  const seen=new Set(),items=[];
-  res.forEach(h=>(h&&h.items||[]).forEach(i=>{const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push(i);}));
-  items.sort((a,b)=>b.t-a.t);
-  const cat=j=>/dividen/i.test(j)?'Dividen':/rups|rapat umum/i.test(j)?'RUPS':/laporan|keuangan|kinerja/i.test(j)?'Laporan keuangan':/ipo|penawaran umum/i.test(j)?'IPO':'Lainnya';
-  $('kal-stat').textContent=items.length?items.length+' berita aksi korporasi (14 hari terakhir).':'Belum ada berita yang cocok. Coba lagi nanti.';
-  $('kal-list').innerHTML=items.map(i=>`<a class="box" href="${esc(i.u)}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit"><div class="nm">📅 ${esc(cat(i.j))} · ${esc(i.s||'')} · ${nwAgo(i.t)}</div><div style="font-weight:700;margin-top:4px">${esc(i.j)}</div></a>`).join('');
-}
-
-const GLOS=[
-['PER (Price to Earnings Ratio)','Harga saham dibagi laba per saham. Makin rendah makin murah dibanding laba, tapi bisa juga karena laba turun.'],
-['PBV (Price to Book Value)','Harga saham dibagi nilai buku per saham. Di bawah 1x berarti harga di bawah nilai buku.'],
-['EPS (Earnings per Share)','Laba bersih dibagi jumlah saham beredar.'],
-['ROE (Return on Equity)','Laba bersih dibagi modal sendiri, dalam persen. Makin tinggi makin efisien memakai modal pemegang saham.'],
-['DER (Debt to Equity Ratio)','Total utang dibagi modal sendiri. Makin tinggi makin besar ketergantungan pada utang.'],
-['Dividend Yield','Dividen per saham dibagi harga saham, dalam persen. Imbal hasil dari dividen.'],
-['Market Cap (MCap)','Harga saham dikali jumlah saham beredar. Ukuran besar kecilnya perusahaan di bursa.'],
-['Nilai wajar Graham','Perkiraan harga wajar dari rumus Benjamin Graham (akar dari 22,5 × EPS × BVPS). Hanya estimasi kasar.'],
-['Margin of Safety (MoS)','Selisih antara nilai wajar dan harga pasar, dalam persen. Makin besar makin ada ruang pengaman, tapi bukan jaminan.'],
-['Likuiditas','Seberapa mudah saham dijual-beli tanpa mengubah harga banyak. Biasanya dilihat dari nilai transaksi harian.'],
-['IHSG','Indeks Harga Saham Gabungan, ukuran gabungan pergerakan seluruh saham di BEI.'],
-['RSI (Relative Strength Index)','Indikator momentum 0–100. Di bawah 30 sering disebut jenuh jual (oversold), di atas 70 jenuh beli (overbought).'],
-['Stochastic','Indikator yang membandingkan harga penutupan dengan kisaran harga beberapa hari terakhir. Di bawah 20 sering disebut oversold.'],
-['MACD','Selisih dua rata-rata bergerak eksponensial. Histogram positif berarti momentum naik.'],
-['SMA / EMA','Rata-rata harga penutupan dalam jumlah hari tertentu. EMA memberi bobot lebih besar pada harga terbaru.'],
-['Golden cross / Death cross','Golden cross: rata-rata cepat memotong ke atas rata-rata lambat. Death cross: sebaliknya. Keduanya sinyal tren, bukan kepastian.'],
-['Support dan resistance','Support: area harga yang sering menahan penurunan. Resistance: area yang sering menahan kenaikan.'],
-['Stop loss','Batas harga untuk menjual rugi agar kerugian tidak membesar.'],
-['Target harga','Harga yang diharapkan tercapai untuk mengambil untung.'],
-['Risk-reward','Perbandingan potensi rugi dan potensi untung. 1:2 berarti potensi untung dua kali potensi rugi.'],
-['Backtest','Menguji aturan sinyal pada data masa lalu. Hasil masa lalu tidak menjamin hasil masa depan.'],
-['Tingkat keberhasilan','Persentase kejadian sinyal yang diikuti kenaikan (atau penurunan) dalam jangka waktu tertentu. Selalu bandingkan dengan peluang acak.'],
-['Akumulasi broker','Pola ketika satu atau beberapa sekuritas terus membeli saham tertentu. Data ini belum tersedia gratis di website ini.'],
-['Keterbukaan informasi','Laporan resmi emiten ke BEI, misalnya pembelian saham oleh direksi atau pemegang saham besar.'],
-['Prospektus','Dokumen resmi yang berisi informasi perusahaan dan saham yang akan dijual saat IPO.'],
-['IPO','Penawaran umum perdana: perusahaan pertama kali menjual sahamnya ke publik.'],
-['Dividen','Pembagian laba perusahaan kepada pemegang saham.'],
-['RUPS','Rapat Umum Pemegang Saham, forum resmi pemegang saham. Keputusan dividen biasanya diambil di sini.'],
-['Stock split / reverse split','Pemecahan atau penggabungan saham. Jumlah lembar berubah, nilai total investasi tidak berubah.'],
-['Right issue','Penerbitan saham baru yang ditawarkan kepada pemegang saham lama, biasanya dengan harga lebih murah.'],
-['Auto rejection','Batas kenaikan atau penurunan harga harian yang ditetapkan bursa.'],
-['Oversold / Overbought','Oversold: harga sudah turun banyak dan berpeluang memantul. Overbought: harga sudah naik banyak dan berpeluang terkoreksi.'],
-['Fibonacci dan harmonik','Alat bantu membaca area pantulan harga dengan rasio tertentu. Hasilnya tetap bergantung pada penafsiran.'],
-['Astronacci','Kepercayaan astro-finance yang mengaitkan fase bulan atau Merkurius dengan pasar. Belum terbukti secara ilmiah.'],
-];
-function renderGlos(){const q=($('g-q').value||'').trim().toLowerCase();
-  const rows=GLOS.filter(([t,d])=>!q||t.toLowerCase().includes(q)||d.toLowerCase().includes(q));
-  $('g-list').innerHTML=rows.length?rows.map(([t,d])=>`<div class="box"><b>${esc(t)}</b><div class="nm" style="line-height:1.55;margin-top:4px">${esc(d)}</div></div>`).join(''):'<div class="empty">Istilah tidak ditemukan.</div>';}
-$('g-q').addEventListener('input',renderGlos);renderGlos();
-
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
-  const k=t.dataset.t;if(k==='pantau')renderWatch();if(k==='peta')renderPeta();if(k==='kal')loadKal().catch(()=>{});}));
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
 </body>
 </html>
