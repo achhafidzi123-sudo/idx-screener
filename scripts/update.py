@@ -30,7 +30,7 @@ DATA = ROOT / "data"
 WIB = timezone(timedelta(hours=7))
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
 
-PRICE_DAYS = 120            # hari bursa yang disimpan untuk RSI & grafik
+PRICE_DAYS = 260            # hari bursa yang disimpan (±1 tahun) untuk RSI, SMA 200, uji historis & grafik
 FUND_MAX_AGE_DAYS = 6       # fundamental diambil ulang jika lebih tua dari ini
 FUND_BUDGET_MIN = int(os.getenv("FUND_BUDGET_MIN", "20"))      # maks menit per run untuk fundamental
 BROKER_BUDGET_MIN = int(os.getenv("BROKER_BUDGET_MIN", "30"))  # maks menit per run untuk broker summary
