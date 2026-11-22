@@ -412,6 +412,7 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
 #s-list .rt .rr b{font-size:14px}
 @media(max-width:1100px){#s-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){#s-list{gap:8px}#s-list .rcard{padding:10px}#s-list .rt .tk{font-size:16px}#s-list .rt .rr small{font-size:10px}#s-list .rt .rr b{font-size:12.5px}}
+body.ch-active header{position:relative!important;top:auto!important}
 </style>
 </head>
 <body>
@@ -1500,7 +1501,7 @@ document.querySelectorAll('#n-cat button').forEach(b=>b.onclick=()=>{if(NW_CAT==
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();if(t.dataset.t==='chart')chInit();});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();document.body.classList.toggle('ch-active',t.dataset.t==='chart');if(t.dataset.t==='chart')chInit();});
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
