@@ -601,7 +601,7 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
     </div>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px" id="ch-quick"></div>
   </div>
-  <div class="box" style="padding:0;overflow:hidden"><div id="ch-wrap" style="height:560px;width:100%"></div></div>
+  <div class="box" id="ch-box" style="padding:0;overflow:hidden;position:relative"><button id="ch-full" class="btn" style="position:absolute;top:8px;right:8px;z-index:5;padding:6px 10px;font-size:12px">⛶ Layar penuh</button><div id="ch-wrap" style="height:560px;width:100%"></div></div>
 </section>
 
 <section class="pane" id="p-fund">
@@ -1483,11 +1483,19 @@ function chSet(code){code=String(code||'').trim().toUpperCase().replace(/^IDX:/,
   sc.textContent=JSON.stringify({autosize:true,symbol:'IDX:'+code,interval:'D',timezone:'Asia/Jakarta',theme:'light',style:'1',locale:'id',enable_publishing:false,allow_symbol_change:true,hide_side_toolbar:false,withdateranges:true,details:true,hotlist:false,calendar:false,studies:['STD;Stochastic','STD;RSI','STD;MACD','STD;Volume%1Profile%1Fixed%1Range'],support_host:'https://www.tradingview.com'});
   box.appendChild(sc);wrap.appendChild(box);
   document.querySelectorAll('#ch-quick button').forEach(b=>b.classList.toggle('on',b.dataset.c===code));}
-function chInit(){if(!$('ch-quick').childElementCount){$('ch-quick').innerHTML=CH_QUICK.map(c=>`<button class="seg-b" data-c="${c}" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);cursor:pointer;font-weight:700">${c}</button>`).join('');
+function chInit(){if(!$('ch-full').dataset.b){$('ch-full').dataset.b='1';$('ch-full').onclick=chFullToggle;}
+  if(!$('ch-quick').childElementCount){$('ch-quick').innerHTML=CH_QUICK.map(c=>`<button class="seg-b" data-c="${c}" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);cursor:pointer;font-weight:700">${c}</button>`).join('');
     $('ch-quick').onclick=e=>{const b=e.target.closest('[data-c]');if(b){$('ch-sym').value=b.dataset.c;chSet(b.dataset.c);}};
     $('ch-go').onclick=()=>chSet($('ch-sym').value);
     $('ch-sym').addEventListener('keydown',e=>{if(e.key==='Enter')chSet($('ch-sym').value);});}
   if(!CH_SYM){let c='BBCA';try{c=localStorage.getItem('idx_chsym')||'BBCA'}catch(e){}chSet(c);}}
+
+/* ---- Layar penuh untuk grafik ---- */
+function chFull(on){const b=$('ch-box');if(on){b.style.cssText+=';position:fixed;inset:0;z-index:9999;border-radius:0;margin:0;background:var(--bg);display:flex;flex-direction:column';$('ch-wrap').style.height='100%';$('ch-wrap').style.flex='1';$('ch-full').textContent='✕ Tutup';$('ch-full').style.cssText+=';top:10px;right:10px';}
+  else{b.style.cssText='padding:0;overflow:hidden;position:relative';$('ch-wrap').style.height='560px';$('ch-full').textContent='⛶ Layar penuh';$('ch-full').style.cssText='position:absolute;top:8px;right:8px;z-index:5;padding:6px 10px;font-size:12px';}
+  chSet(CH_SYM||'BBCA');}
+function chFullToggle(){chFull(!$('ch-box').style.position.includes('fixed'));}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ch-box')&&$('ch-box').style.position==='fixed')chFull(false);});
 document.querySelectorAll('#n-cat button').forEach(b=>b.onclick=()=>{if(NW_CAT===b.dataset.nc)return;NW_CAT=b.dataset.nc;document.querySelectorAll('#n-cat button').forEach(x=>x.classList.toggle('on',x===b));NW=[];NW_ST=null;$('n-list').innerHTML='';$('n-stat').textContent='Memuat berita '+NW_CATS[NW_CAT].nama+'…';$('n-sum').style.display='none';newsTimer();});
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
