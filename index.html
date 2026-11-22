@@ -1482,7 +1482,7 @@ function chSet(code){code=String(code||'').trim().toUpperCase().replace(/^IDX:/,
   const sc=document.createElement('script');sc.type='text/javascript';sc.async=true;
   sc.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
   sc.textContent='';
-  sc.textContent=JSON.stringify({autosize:true,symbol:'IDX:'+code,interval:'D',timezone:'Asia/Jakarta',theme:'light',style:'1',locale:'id',enable_publishing:false,allow_symbol_change:true,hide_side_toolbar:false,withdateranges:true,details:true,hotlist:false,calendar:false,studies:['STD;Stochastic','STD;RSI','STD;MACD','STD;Volume%1Profile%1Fixed%1Range'],support_host:'https://www.tradingview.com'});
+  sc.textContent=JSON.stringify({autosize:true,symbol:'IDX:'+code,interval:'D',timezone:'Asia/Jakarta',theme:'light',style:'1',locale:'id',enable_publishing:false,allow_symbol_change:true,hide_side_toolbar:false,withdateranges:true,details:true,hotlist:false,calendar:false,studies:[],support_host:'https://www.tradingview.com'});
   box.appendChild(sc);wrap.appendChild(box);
   document.querySelectorAll('#ch-quick button').forEach(b=>b.classList.toggle('on',b.dataset.c===code));}
 function chInit(){if(!$('ch-full').dataset.b){$('ch-full').dataset.b='1';$('ch-full').onclick=chFullToggle;}
