@@ -1650,11 +1650,16 @@ function renderAnalisa(){if(!PRC)return;
   for(const k in by){if(q&&!k.includes(q))continue;const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0).map(x=>x[1]);if(a.length<60)continue;
     const srt=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);const d=srt.map(x=>x[0]);
     let hl=null;if(HLD&&HLD.high&&HLD.high[k]){const ix={};HLD.dates.forEach((dd,i)=>ix[dd]=i);const ha=[],la=[];d.forEach(dd=>{const i=ix[dd];ha.push(i!=null?HLD.high[k][i]:null);la.push(i!=null?HLD.low[k][i]:null);});hl={h:ha,l:la};}
-    rows.push({...analisaCore(k,a,hl),v:VAL?VAL[k]||0:0,d:d.at(-1)});}
+    const core=analisaCore(k,a,hl),last=a.at(-1);const seg=a.slice(-10);
+    const lows=hl&&hl.l?hl.l.slice(-10).filter(x=>x!=null):[];const sw=lows.length?Math.min(...lows):Math.min(...seg);
+    const stop=sw*0.99,risk=last-stop,target=last+2*risk;
+    rows.push({...core,v:VAL?VAL[k]||0:0,d:d.at(-1),stop,target,risk,rr:risk>0?2:0});}
   rows.sort((x,y)=>y.v-x.v);
   const card=r=>`<div class="card rcard" style="margin-bottom:10px"><div class="rt"><div class="tk">${esc(r.name)}</div><div class="nm">${fmt(r.last,0)}</div></div>
     <div class="nm" style="margin:4px 0"><b>${r.kes}</b> · ${r.tren}</div>
-    <div class="nm" style="line-height:1.6">Kelebihan: ${r.pos.join(', ')||'–'}<br>Kekhawatiran: ${r.neg.join(', ')||'–'}</div></div>`;
+    <div class="nm" style="line-height:1.6">Kelebihan: ${r.pos.join(', ')||'–'}<br>Kekhawatiran: ${r.neg.join(', ')||'–'}</div>
+    ${r.kes.startsWith('🟢')&&r.risk>0?`<div class="nm" style="line-height:1.6;margin-top:6px;border-top:1px solid var(--bd);padding-top:6px">Contoh pengaturan risiko: stop loss <b>${fmt(r.stop,0)}</b> (di bawah harga terendah 10 hari, −1%) · target <b>${fmt(r.target,0)}</b> (risk-reward 1:2)</div>`:''}
+    <div class="nm" style="font-size:11px;margin-top:4px">Bukan rekomendasi. Atur ukuran posisi sesuai kemampuan Anda sendiri.</div></div>`;
   $('an-stat').innerHTML=`${rows.length} emiten dianalisis (data s.d. ${tgl(rows.length?rows[0].d:'')}) · urut likuiditas`;
   $('an-list').innerHTML=rows.slice(0,q?50:40).map(card).join('')||'<div class="empty">Tidak ada hasil.</div>';
   // IHSG (indeks proksi)
