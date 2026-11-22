@@ -413,6 +413,7 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
 @media(max-width:1100px){#s-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){#s-list{gap:8px}#s-list .rcard{padding:10px}#s-list .rt .tk{font-size:16px}#s-list .rt .rr small{font-size:10px}#s-list .rt .rr b{font-size:12.5px}}
 body.ch-active header{position:relative!important;top:auto!important}
+body.ch-full header{display:none!important}
 </style>
 </head>
 <body>
@@ -1492,7 +1493,7 @@ function chInit(){if(!$('ch-full').dataset.b){$('ch-full').dataset.b='1';$('ch-f
   if(!CH_SYM){let c='BBCA';try{c=localStorage.getItem('idx_chsym')||'BBCA'}catch(e){}chSet(c);}}
 
 /* ---- Layar penuh untuk grafik ---- */
-function chFull(on){const b=$('ch-box');if(on){b.style.cssText+=';position:fixed;inset:0;z-index:9999;border-radius:0;margin:0;background:var(--bg);display:flex;flex-direction:column';$('ch-wrap').style.height='100%';$('ch-wrap').style.flex='1';$('ch-full').textContent='✕ Tutup';$('ch-full').style.cssText+=';top:10px;right:10px';}
+function chFull(on){document.body.classList.toggle('ch-full',on);const b=$('ch-box');if(on){b.style.cssText+=';position:fixed;inset:0;z-index:9999;border-radius:0;margin:0;background:var(--bg);display:flex;flex-direction:column';$('ch-wrap').style.height='100%';$('ch-wrap').style.flex='1';$('ch-full').textContent='✕ Tutup';$('ch-full').style.cssText+=';top:10px;right:10px';}
   else{b.style.cssText='padding:0;overflow:hidden;position:relative';$('ch-wrap').style.height='560px';$('ch-full').textContent='⛶ Layar penuh';$('ch-full').style.cssText='position:absolute;top:8px;right:8px;z-index:5;padding:6px 10px;font-size:12px';}
   chSet(CH_SYM||'BBCA');}
 function chFullToggle(){chFull(!$('ch-box').style.position.includes('fixed'));}
