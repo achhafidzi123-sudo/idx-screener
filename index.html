@@ -604,6 +604,7 @@ body.ch-full header{display:none!important}
   <div class="box" id="an-ihsg"></div>
   <div class="box" id="ap-box"></div>
   <div class="box" id="sma-box"></div>
+  <div class="box" id="ind-box"></div>
   <div id="an-list"></div>
 </section>
 
@@ -1606,6 +1607,42 @@ function renderSMA(){if(!PRC)return;const box=$('sma-box');if(!box)return;
     return`<div style="margin-top:8px"><b>SMA ${f}/${sl}</b> — ${r.n} trade dari ${r.stocksOk} saham · menang <b>${fmt(r.win,1)}%</b> · rata-rata per trade ${r.avg>0?'+':''}${fmt(r.avg,2)}% (setelah biaya) · pembanding acak: periode 10 hari yang naik setelah biaya = <b>${fmt(r.baseWin,1)}%</b></div>`;}).join('');
   box.innerHTML=`<h3>Uji SMA crossover</h3><div class="nm" style="line-height:1.55">Beli saat SMA cepat memotong ke atas SMA lambat, jual saat memotong ke bawah. Biaya 0,3% pulang-pergi. Ini uji historis, bukan rekomendasi.</div>${rows}
   <div class="nm" style="margin-top:8px;line-height:1.5">Data hanya sekitar 5 bulan, sehingga jumlah trade sedikit dan periodenya didominasi penurunan. Bandingkan dengan pembanding acak.</div>`;}
+
+/* ---- Uji per indikator (kejadian sinyal, 10 hari bursa, ≥3%) ---- */
+function indEvents(cl,h,l){
+  const r=rsiSeries(cl,14),md=macdA2(cl),F=smaArr(cl,20),S=smaArr(cl,50);
+  let st=null;if(h&&l){st=stochSeries(cl,h,l,5,3,3);}
+  const ev={rsiB:[],rsiS:[],macdB:[],macdS:[],stB:[],stS:[],smaB:[],smaS:[]};
+  for(let t=1;t<cl.length;t++){
+    if(isFinite(r[t])&&isFinite(r[t-1])){if(r[t-1]>=30&&r[t]<30)ev.rsiB.push(t);if(r[t-1]<=70&&r[t]>70)ev.rsiS.push(t);}
+    if(md[t]!=null&&md[t-1]!=null){if(md[t-1]<0&&md[t]>=0)ev.macdB.push(t);if(md[t-1]>0&&md[t]<=0)ev.macdS.push(t);}
+    if(st&&isFinite(st.K[t])&&isFinite(st.D[t])&&isFinite(st.K[t-1])&&isFinite(st.D[t-1])){
+      if(st.K[t-1]<=st.D[t-1]&&st.K[t]>st.D[t]&&Math.min(st.K[t],st.D[t])<20)ev.stB.push(t);
+      if(st.K[t-1]>=st.D[t-1]&&st.K[t]<st.D[t]&&Math.max(st.K[t],st.D[t])>80)ev.stS.push(t);}
+    if(isFinite(F[t])&&isFinite(S[t])&&isFinite(F[t-1])&&isFinite(S[t-1])){if(F[t-1]<=S[t-1]&&F[t]>S[t])ev.smaB.push(t);if(F[t-1]>=S[t-1]&&F[t]<S[t])ev.smaS.push(t);}
+  }
+  return ev;}
+function macdA2(c){const m=emaA(c,12).map((x,i)=>x-emaA(c,26)[i]),sg=emaA(m,9);return m.map((x,i)=>i<8?null:x-sg[i]);}
+function backtestIndikator(){
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const ix={};if(HLD)HLD.dates.forEach((d,i)=>ix[d]=i);
+  const R={};const add=(key,ok)=>{R[key]=R[key]||{n:0,w:0};R[key].n++;if(ok)R[key].w++;};
+  for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);if(a.length<60)continue;const cl=a.map(x=>x[1]);
+    let h=null,l=null;if(HLD&&HLD.high&&HLD.high[k]){const hh=a.map(x=>{const i=ix[x[0]];return i!=null?HLD.high[k][i]:null;}),ll=a.map(x=>{const i=ix[x[0]];return i!=null?HLD.low[k][i]:null;});if(!hh.some(x=>x==null)&&!ll.some(x=>x==null)){h=hh;l=ll;}}
+    const ev=indEvents(cl,h,l);
+    for(const key in ev){const bull=key.endsWith('B');ev[key].forEach(t=>{if(t+10>=cl.length)return;const r=cl[t+10]/cl[t]-1;add(key,bull?r>=0.03:r<=-0.03);});}}
+  return R;}
+let IND=null;
+function renderIndikator(){if(!PRC)return;const box=$('ind-box');if(!box)return;
+  if(!IND)IND=backtestIndikator();
+  const L={rsiB:'RSI keluar dari jenuh jual (<30) — beli',rsiS:'RSI masuk jenuh beli (>70) — jual',macdB:'MACD histogram berbalik positif — beli',macdS:'MACD histogram berbalik negatif — jual',stB:'Stochastic golden cross di area oversold — beli',stS:'Stochastic death cross di area overbought — jual',smaB:'MA20 memotong ke atas MA50 — beli',smaS:'MA20 memotong ke bawah MA50 — jual'};
+  const rows=Object.keys(L).map(k=>{const g=IND[k];if(!g||!g.n)return`<tr><td>${L[k]}</td><td colspan="2">belum ada kejadian</td></tr>`;
+    const pc=Math.round(g.w/g.n*100),bl=k.endsWith('B');
+    return`<tr><td>${L[k]}</td><td><b>${pc}%</b></td><td>${g.n}</td></tr>`;}).join('');
+  box.innerHTML=`<h3>Uji per indikator</h3>
+   <div class="nm" style="line-height:1.55">Setiap kejadian sinyal diukur: beli berhasil jika 10 hari bursa kemudian harga naik ≥3%, jual berhasil jika turun ≥3%. Pembanding acak untuk semua hari: naik ≥3% = 19%, turun ≥3% = 53%. Pola harmonik diukur di tab Harmonik.</div>
+   <div style="overflow-x:auto;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr><th style="text-align:left">Sinyal</th><th>Berhasil</th><th>Kasus</th></tr>${rows}</table></div>
+   <div class="nm" style="margin-top:8px">Data hanya sekitar 5 bulan. Kasus yang sedikit belum bisa dijadikan kesimpulan.</div>`;}
 function renderAnalisa(){if(!PRC)return;
   const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
   const q=($('an-q').value||'').trim().toUpperCase();
@@ -1626,7 +1663,7 @@ function renderAnalisa(){if(!PRC)return;
     $('an-ihsg').innerHTML=`<h3>IHSG · indeks proksi</h3><div class="nm" style="margin-bottom:6px">Dihitung dari rata-rata saham likuid di website (bukan angka IHSG resmi).</div>
       <div><b>${core.kes}</b> · ${core.tren}</div><div class="nm" style="line-height:1.6;margin-top:6px">Kelebihan: ${core.pos.join(', ')||'–'}<br>Kekhawatiran: ${core.neg.join(', ')||'–'}</div>`;}
   else $('an-ihsg').innerHTML='<div class="nm">Data indeks proksi belum cukup.</div>';
-  renderAnalisaPasar();renderSMA();}
+  renderAnalisaPasar();renderSMA();renderIndikator();}
 $('an-q').addEventListener('input',renderAnalisa);
 
 /* ---- PAKAR: berita & kutipan terbaru yang menyebut nama (judul + tautan sumber) ---- */
