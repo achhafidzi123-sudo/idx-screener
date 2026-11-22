@@ -630,6 +630,7 @@ body.menu-open #menubg{display:block;position:fixed;inset:0;z-index:55;backgroun
   <div class="box" id="ap-box"></div>
   <div class="box" id="sma-box"></div>
   <div class="box" id="ind-box"></div>
+  <div class="box" id="hr-box"></div>
   <div id="an-list"></div>
 </section>
 
@@ -1759,6 +1760,48 @@ async function loadAuto(){
   }
 }
 loadAuto().then(()=>{renderCari();renderAkum();});
+
+/* ===== Sinyal harian: peluang naik keesokan hari dari data historis website ===== */
+let HR_STAT=null;
+function hrStats(){
+  if(HR_STAT)return HR_STAT;
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const B={};let tot=0,up=0;
+  const keys=Object.keys(by).filter(k=>by[k].length>=80).sort((x,y)=>(VAL?(VAL[y]||0)-(VAL[x]||0):0)).slice(0,150);
+  for(const k of keys){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);if(a.length<80)continue;
+    const cl=a.map(x=>x[1]);
+    for(let t=60;t<cl.length-1;t++){
+      const sc=skorGabung(cl.slice(t-59,t+1));const ret=(cl[t+1]/cl[t]-1)*100;
+      const g=B[sc]=B[sc]||{n:0,w:0,w1:0,sum:0};g.n++;g.sum+=ret;if(ret>0)g.w++;if(ret>=1)g.w1++;tot++;if(ret>0)up++;}}
+  HR_STAT={B,base:tot?up/tot*100:NaN,tot,n:keys.length};return HR_STAT;}
+function renderHarian(){
+  if(!PRC)return;
+  const st=hrStats();
+  const thr=Math.max(0,Math.min(100,num($('hr-thr')?$('hr-thr').value:70)||70));
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const rows=[];
+  for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);if(a.length<80)continue;
+    const cl=a.map(x=>x[1]),last=cl.at(-1),sc=skorGabung(cl.slice(-60)),g=st.B[sc];if(!g||g.n<200)continue;
+    rows.push({k,sc,last,p:g.w/g.n*100,p1:g.w1/g.n*100,avg:g.sum/g.n,n:g.n,d:a.at(-1)[0]});}
+  const lolos=rows.filter(r=>r.p>=thr).sort((x,y)=>y.p-x.p);
+  const best=rows.length?Math.max(...rows.map(r=>r.p)):NaN;
+  const txt=lolos.length
+    ?`${lolos.length} saham memenuhi peluang ≥ ${thr}%.`
+    :`Tidak ada saham yang memenuhi peluang ≥ ${thr}%. Peluang tertinggi dari semua kelompok sinyal di data website ini hanya ${fmt(best,1)}%.`;
+  const card=r=>`<div class="card rcard" style="margin-bottom:8px"><div class="rt"><div class="tk">${esc(r.k)}</div><div class="nm">Rp ${fmt(r.last,0)}</div></div>
+    <div class="nm" style="line-height:1.6">Peluang naik keesokan hari: <b>${fmt(r.p,1)}%</b> · naik ≥1%: <b>${fmt(r.p1,1)}%</b><br>
+    Rata-rata perubahan kelompok ini: <b class="${r.avg>=0?'g':'r'}">${r.avg>=0?'+':''}${fmt(r.avg,2)}%</b> (≈ Rp ${fmt(r.last*r.avg/100,0)} per saham)</div></div>`;
+  $('hr-box').innerHTML=`<h3>Sinyal naik hari berikutnya</h3>
+    <div class="nm" style="line-height:1.6">Peluang diambil dari ${fmt(st.tot,0)} kejadian harian pada ${st.n} saham paling likuid di website ini, untuk skor sinyal yang sama. Peluang naik rata-rata semua hari hanya ${fmt(st.base,1)}%, jadi angka di atas 50% pun belum tentu berarti ada keunggulan.</div>
+    <div class="row" style="gap:8px;margin:8px 0;flex-wrap:wrap"><label class="nm">Batas peluang (%) <input type="number" id="hr-thr" value="${thr}" min="0" max="100" style="width:90px"></label></div>
+    <div class="nm" style="font-weight:700;margin-bottom:8px">${esc(txt)}</div>
+    ${lolos.slice(0,20).map(card).join('')}
+    <div class="nm" style="font-size:11px;margin-top:6px">Ini bukan prediksi dan bukan rekomendasi beli/jual. Data historis tidak menjamin hasil hari ini.</div>`;
+  const inp=$('hr-thr');if(inp)inp.addEventListener('change',renderHarian,{once:true});
+}
+
+const _renderAnalisaBase=renderAnalisa;
+renderAnalisa=function(){_renderAnalisaBase();try{renderHarian()}catch(e){console.error(e)}};
 </script>
 </body>
 </html>
