@@ -433,6 +433,7 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
     <button class="tab" data-t="news">📰 Berita</button>
     <button class="tab" data-t="ipo">🚀 IPO</button>
     <button class="tab" data-t="ki">📢 Keterbukaan</button>
+    <button class="tab" data-t="chart">📈 Chart</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -589,6 +590,18 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
     <div class="fgrid"><div class="f"><label>Rentang ke depan</label><select id="as-win"><option value="30">30 hari</option><option value="60">60 hari</option><option value="90" selected>90 hari</option><option value="180">180 hari</option></select></div></div>
     <div class="nm" id="as-note" style="line-height:1.55;margin-top:10px">Memuat…</div></div>
   <div class="agrid"><div class="box" id="as-up"></div><div class="box" id="as-dn"></div></div>
+</section>
+
+<section class="pane" id="p-chart">
+  <div class="box"><h3>Grafik saham (TradingView)</h3>
+    <div class="nm" style="line-height:1.55;margin-bottom:8px">Grafik resmi TradingView dengan semua indikator dan alat gambar. Harga mengikuti data di akun TradingView Anda: tanpa langganan data IDX, harga bisa tertunda.</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap">
+      <input id="ch-sym" placeholder="Kode saham, mis. BBCA" style="flex:1;min-width:140px;text-transform:uppercase">
+      <button class="btn" id="ch-go">Tampilkan</button>
+    </div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px" id="ch-quick"></div>
+  </div>
+  <div class="box" style="padding:0;overflow:hidden"><div id="ch-wrap" style="height:560px;width:100%"></div></div>
 </section>
 
 <section class="pane" id="p-fund">
@@ -1456,11 +1469,30 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)liveTimer(
 try{$('n-tr').checked=localStorage.getItem('idx_ntr')!=='0';}catch(e){}
 $('n-tr').onchange=()=>{store('idx_ntr',$('n-tr').checked?'1':'0');if($('n-tr').checked){nwApplyTr();renderNews();nwTranslate();}else{NW.forEach(i=>{if(i.o){i.j=i.o;i.o='';}});renderNews();}};
 $('n-list').addEventListener('click',e=>{const t=e.target.closest('[data-tl]');if(t){e.preventDefault();e.stopPropagation();window.open('https://translate.google.com/translate?sl=auto&tl=id&u='+encodeURIComponent(t.dataset.tl),'_blank','noopener');}},true);
+
+/* ---- CHART (TradingView widget resmi) ---- */
+const CH_QUICK=['BBCA','BBRI','BMRI','TLKM','ASII','BRPT','ANTM','BUMI'];
+let CH_SYM=null;
+function chSet(code){code=String(code||'').trim().toUpperCase().replace(/^IDX:/,'');if(!code)return;CH_SYM=code;try{localStorage.setItem('idx_chsym',code)}catch(e){}
+  const wrap=$('ch-wrap');wrap.innerHTML='';
+  const box=document.createElement('div');box.className='tradingview-widget-container';box.style.cssText='height:100%;width:100%';
+  const inner=document.createElement('div');inner.className='tradingview-widget-container__widget';inner.style.cssText='height:100%;width:100%';box.appendChild(inner);
+  const sc=document.createElement('script');sc.type='text/javascript';sc.async=true;
+  sc.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  sc.textContent='';
+  sc.textContent=JSON.stringify({autosize:true,symbol:'IDX:'+code,interval:'D',timezone:'Asia/Jakarta',theme:'light',style:'1',locale:'id',enable_publishing:false,allow_symbol_change:true,hide_side_toolbar:false,withdateranges:true,details:true,hotlist:false,calendar:false,studies:['STD;Stochastic','STD;RSI','STD;MACD','STD;Volume%1Profile%1Fixed%1Range'],support_host:'https://www.tradingview.com'});
+  box.appendChild(sc);wrap.appendChild(box);
+  document.querySelectorAll('#ch-quick button').forEach(b=>b.classList.toggle('on',b.dataset.c===code));}
+function chInit(){if(!$('ch-quick').childElementCount){$('ch-quick').innerHTML=CH_QUICK.map(c=>`<button class="seg-b" data-c="${c}" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);cursor:pointer;font-weight:700">${c}</button>`).join('');
+    $('ch-quick').onclick=e=>{const b=e.target.closest('[data-c]');if(b){$('ch-sym').value=b.dataset.c;chSet(b.dataset.c);}};
+    $('ch-go').onclick=()=>chSet($('ch-sym').value);
+    $('ch-sym').addEventListener('keydown',e=>{if(e.key==='Enter')chSet($('ch-sym').value);});}
+  if(!CH_SYM){let c='BBCA';try{c=localStorage.getItem('idx_chsym')||'BBCA'}catch(e){}chSet(c);}}
 document.querySelectorAll('#n-cat button').forEach(b=>b.onclick=()=>{if(NW_CAT===b.dataset.nc)return;NW_CAT=b.dataset.nc;document.querySelectorAll('#n-cat button').forEach(x=>x.classList.toggle('on',x===b));NW=[];NW_ST=null;$('n-list').innerHTML='';$('n-stat').textContent='Memuat berita '+NW_CATS[NW_CAT].nama+'…';$('n-sum').style.display='none';newsTimer();});
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();if(t.dataset.t==='chart')chInit();});
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
