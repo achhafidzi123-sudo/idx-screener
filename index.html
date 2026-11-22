@@ -603,6 +603,7 @@ body.ch-full header{display:none!important}
     <div class="nm" id="an-stat" style="margin-top:8px;line-height:1.5">Memuat…</div></div>
   <div class="box" id="an-ihsg"></div>
   <div class="box" id="ap-box"></div>
+  <div class="box" id="sma-box"></div>
   <div id="an-list"></div>
 </section>
 
@@ -1577,6 +1578,34 @@ function renderAnalisaPasar(){if(!PRC)return;
    <div><b>🔴 Skor ≤ −2 (cenderung turun)</b> — berhasil turun ≥3%: <b>${pc(BT_GAB.bear)}</b></div>
    <div class="achips" style="margin:6px 0 12px">${ch(lemah)}</div>
    <div class="nm" style="line-height:1.55">Cara menghitung: tiap hari bursa di data, skor dihitung hanya dari data sampai hari itu. "Berhasil" jika setelah 10 hari bursa harga naik ≥3% (skor bullish) atau turun ≥3% (skor bearish). Data hanya sekitar 5 bulan dan periodenya didominasi penurunan, jadi angka bearish sebagian besar mencerminkan arah pasar saat itu. Bandingkan dengan pembanding acak di atas. Ini bukan jaminan dan bukan rekomendasi beli/jual.</div>`;}
+
+/* ---- Uji SMA crossover (long only, biaya 0,3% pulang-pergi) ---- */
+function smaArr(a,n){const o=Array(a.length).fill(NaN);let s=0;for(let i=0;i<a.length;i++){s+=a[i];if(i>=n)s-=a[i-n];if(i>=n-1)o[i]=s/n;}return o;}
+function backtestSMA(f,sl,fee){
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const rets=[],base=[];let stocksOk=0;
+  for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0).map(x=>x[1]);if(a.length<sl+5)continue;stocksOk++;
+    const F=smaArr(a,f),S=smaArr(a,sl);let inPos=false,entry=0;
+    for(let t=sl;t<a.length;t++){
+      const up=F[t]>S[t],prevUp=F[t-1]>S[t-1];
+      if(!inPos&&up&&!prevUp){inPos=true;entry=a[t];}
+      else if(inPos&&!up&&prevUp){inPos=false;rets.push(a[t]/entry-1-fee);}
+    }
+    if(inPos)rets.push(a.at(-1)/entry-1-fee);
+    for(let t=0;t+10<a.length;t++)base.push(a[t+10]/a[t]-1-fee);}
+  const w=rets.filter(x=>x>0).length,n=rets.length;
+  const avg=n?rets.reduce((x,y)=>x+y,0)/n*100:NaN;
+  const bw=base.filter(x=>x>0).length;
+  return{n,win:n?w/n*100:NaN,avg,stocksOk,baseWin:base.length?bw/base.length*100:NaN};}
+function renderSMA(){if(!PRC)return;const box=$('sma-box');if(!box)return;
+  const combos=[[20,50],[50,200]];const fee=0.003;
+  const rows=combos.map(([f,sl])=>{if(!PRC.length)return'';
+    const maxLen=Math.max(...Object.values(PRC.reduce((m,r)=>{m[r.k]=(m[r.k]||0)+1;return m;},{})));
+    if(maxLen<sl+5)return`<div class="nm"><b>SMA ${f}/${sl}</b>: data belum cukup. Setiap saham di website baru menyimpan ${maxLen} hari, sedangkan SMA ${sl} butuh minimal ${sl+5}.</div>`;
+    const r=backtestSMA(f,sl,fee);
+    return`<div style="margin-top:8px"><b>SMA ${f}/${sl}</b> — ${r.n} trade dari ${r.stocksOk} saham · menang <b>${fmt(r.win,1)}%</b> · rata-rata per trade ${r.avg>0?'+':''}${fmt(r.avg,2)}% (setelah biaya) · pembanding acak: periode 10 hari yang naik setelah biaya = <b>${fmt(r.baseWin,1)}%</b></div>`;}).join('');
+  box.innerHTML=`<h3>Uji SMA crossover</h3><div class="nm" style="line-height:1.55">Beli saat SMA cepat memotong ke atas SMA lambat, jual saat memotong ke bawah. Biaya 0,3% pulang-pergi. Ini uji historis, bukan rekomendasi.</div>${rows}
+  <div class="nm" style="margin-top:8px;line-height:1.5">Data hanya sekitar 5 bulan, sehingga jumlah trade sedikit dan periodenya didominasi penurunan. Bandingkan dengan pembanding acak.</div>`;}
 function renderAnalisa(){if(!PRC)return;
   const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
   const q=($('an-q').value||'').trim().toUpperCase();
@@ -1597,7 +1626,7 @@ function renderAnalisa(){if(!PRC)return;
     $('an-ihsg').innerHTML=`<h3>IHSG · indeks proksi</h3><div class="nm" style="margin-bottom:6px">Dihitung dari rata-rata saham likuid di website (bukan angka IHSG resmi).</div>
       <div><b>${core.kes}</b> · ${core.tren}</div><div class="nm" style="line-height:1.6;margin-top:6px">Kelebihan: ${core.pos.join(', ')||'–'}<br>Kekhawatiran: ${core.neg.join(', ')||'–'}</div>`;}
   else $('an-ihsg').innerHTML='<div class="nm">Data indeks proksi belum cukup.</div>';
-  renderAnalisaPasar();}
+  renderAnalisaPasar();renderSMA();}
 $('an-q').addEventListener('input',renderAnalisa);
 
 /* ---- PAKAR: berita & kutipan terbaru yang menyebut nama (judul + tautan sumber) ---- */
