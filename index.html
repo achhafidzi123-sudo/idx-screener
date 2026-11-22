@@ -421,14 +421,31 @@ body.menu-open nav.tabs{display:flex!important;flex-direction:column!important;f
 body.menu-open nav.tabs .tab{display:block!important;width:100%!important;text-align:left!important;padding:12px 14px!important;font-size:14px!important;min-height:0!important;white-space:nowrap!important;border-radius:10px!important}
 #menubg{display:none}
 body.menu-open #menubg{display:block;position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.25)}
+
+/* ---- Perbaikan tombol Menu dan header di HP ---- */
+.brand{flex-wrap:nowrap!important;min-width:0}
+.brand .ttl{flex:1 1 auto;min-width:0;overflow:hidden}
+.brand .ttl h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(16px,4.6vw,22px)}
+.brand .ttl .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .logo{flex:none}
+.menu-btn{flex:none;height:40px;padding:0 14px 0 12px;margin-left:auto;display:inline-flex;align-items:center;gap:7px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:inherit;font:inherit;font-weight:800;font-size:15px;line-height:1;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(14,165,233,.15)}
+.menu-btn .mb-ic{font-size:18px}
+.menu-btn:active{transform:scale(.97)}
+.brand>.themebtn{flex:none}
+@media (max-width:480px){
+  .brand{gap:8px!important}
+  .brand .ttl .sub{display:none}
+  .menu-btn{height:38px;padding:0 10px;font-size:14px}
+  .brand>.themebtn{width:34px;height:34px}
+}
 </style>
 </head>
 <body>
 <header>
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></div>
-    <div><h1>Screener By Afi Cuy</h1><div class="sub"><span class="live"></span>Data otomatis · Bursa Efek Indonesia</div></div>
-    <button class="themebtn" id="menubtn" type="button" style="margin-left:auto;width:auto;padding:0 12px;font-weight:700" aria-label="Menu" aria-expanded="false">☰ Menu</button>
+    <div class="ttl"><h1>Screener By Afi Cuy</h1><div class="sub"><span class="live"></span>Data otomatis · Bursa Efek Indonesia</div></div>
+    <button class="menu-btn" id="menubtn" type="button" aria-label="Menu" aria-expanded="false"><span class="mb-ic" aria-hidden="true">☰</span><span>Menu</span></button>
     <button class="themebtn" id="stylebtn" type="button" title="Ganti gaya tampilan" aria-label="Ganti gaya tampilan">✨</button>
     <button class="themebtn" id="themebtn" style="margin-left:8px" type="button" title="Ganti tema" aria-label="Ganti tema gelap/terang">🌙</button>
   </div>
