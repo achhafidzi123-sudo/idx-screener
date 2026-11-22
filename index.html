@@ -436,6 +436,8 @@ body.ch-full header{display:none!important}
     <button class="tab" data-t="ipo">🚀 IPO</button>
     <button class="tab" data-t="ki">📢 Keterbukaan</button>
     <button class="tab" data-t="chart">📈 Chart</button>
+    <button class="tab" data-t="analisa">🧭 Analisa</button>
+    <button class="tab" data-t="pakar">🧠 Pakar</button>
     <button class="tab" data-t="fund">📊 Fundamental</button>
   </nav>
 
@@ -592,6 +594,24 @@ body.ch-full header{display:none!important}
     <div class="fgrid"><div class="f"><label>Rentang ke depan</label><select id="as-win"><option value="30">30 hari</option><option value="60">60 hari</option><option value="90" selected>90 hari</option><option value="180">180 hari</option></select></div></div>
     <div class="nm" id="as-note" style="line-height:1.55;margin-top:10px">Memuat…</div></div>
   <div class="agrid"><div class="box" id="as-up"></div><div class="box" id="as-dn"></div></div>
+</section>
+
+<section class="pane" id="p-analisa">
+  <div class="box"><h3>Analisa teknikal otomatis</h3>
+    <div class="nm" style="line-height:1.55">Dihitung dari data harga di website ini (tren, RSI, MACD, Stochastic, rata-rata harga). Ini bukan pendapat ahli mana pun dan bukan rekomendasi beli/jual.</div>
+    <input id="an-q" placeholder="Cari kode saham, mis. BBCA" style="width:100%;margin-top:8px">
+    <div class="nm" id="an-stat" style="margin-top:8px;line-height:1.5">Memuat…</div></div>
+  <div class="box" id="an-ihsg"></div>
+  <div class="box" id="ap-box"></div>
+  <div id="an-list"></div>
+</section>
+
+<section class="pane" id="p-pakar">
+  <div class="box"><h3>Pandangan pakar (berita &amp; kutipan terbaru)</h3>
+    <div class="nm" style="line-height:1.55">Berita dan kutipan terbaru yang menyebut nama tiap pakar, diambil otomatis. Judul dan tautan ke media asli; isi lengkapnya dibaca di sumber asli.</div>
+    <div class="row" id="pk-chips" style="gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+    <div class="nm" id="pk-stat" style="margin-top:8px;line-height:1.5">Memuat…</div><div class="nm" id="pk-age" style="margin-top:4px"></div></div>
+  <div id="pk-list"></div>
 </section>
 
 <section class="pane" id="p-chart">
@@ -1459,13 +1479,13 @@ document.querySelectorAll('#ki-seg button').forEach(b=>b.onclick=()=>{KI_F=b.dat
 $('ki-cat').oninput=kiRender;$('ki-q').oninput=kiRender;
 
 /* ---- Pembaruan otomatis (tiap 60 detik) + penunjuk detik ---- */
-const LV={ki:0,ipo:0};let LV_T=null,LV_C=null;
+const LV={ki:0,ipo:0,pakar:0};let LV_T=null,LV_C=null;
 function liveTick(){const t=document.querySelector('.tab.on')?.dataset.t;
-  const m={ki:['ki-age',LV.ki],ipo:['ip-age',LV.ipo]}[t];if(!m)return;
+  const m={ki:['ki-age',LV.ki],ipo:['ip-age',LV.ipo],pakar:['pk-age',LV.pakar]}[t];if(!m)return;
   const el=$(m[0]);if(!el)return;if(!m[1]){el.textContent='Memuat…';return;}
   const d=Math.floor((Date.now()-m[1])/1000);el.innerHTML='🔄 Otomatis diperiksa ulang tiap 60 detik · terakhir diperbarui <b>'+(d<60?d+' detik':Math.floor(d/60)+' menit')+'</b> lalu';}
 function liveTimer(){clearInterval(LV_T);clearInterval(LV_C);const t=document.querySelector('.tab.on')?.dataset.t;
-  if(t!=='ki'&&t!=='ipo')return;const f=t==='ki'?loadKi:loadIpo;f();
+  if(t!=='ki'&&t!=='ipo'&&t!=='pakar')return;const f={ki:loadKi,ipo:loadIpo,pakar:loadPakar}[t];f();
   LV_T=setInterval(()=>{if(!document.hidden)f();},60000);LV_C=setInterval(liveTick,1000);liveTick();}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)liveTimer();});
 try{$('n-tr').checked=localStorage.getItem('idx_ntr')!=='0';}catch(e){}
@@ -1498,11 +1518,107 @@ function chFull(on){document.body.classList.toggle('ch-full',on);const b=$('ch-b
   chSet(CH_SYM||'BBCA');}
 function chFullToggle(){chFull(!$('ch-box').style.position.includes('fixed'));}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ch-box')&&$('ch-box').style.position==='fixed')chFull(false);});
+
+/* ---- ANALISA TEKNIKAL (otomatis dari data website) ---- */
+function emaA(a,n){const k=2/(n+1);let e=a[0];return a.map((x,i)=>{e=i?x*k+e*(1-k):x;return e;});}
+function macdA(c){const m=emaA(c,12).map((x,i)=>x-emaA(c,26)[i]),sg=emaA(m,9);return{m:m.at(-1),s:sg.at(-1),ph:m.at(-1)-sg.at(-1),phPrev:m.at(-2)-sg.at(-2)};}
+function maA(c,n){return c.length<n?NaN:c.slice(-n).reduce((x,y)=>x+y,0)/n;}
+function analisaCore(name,cl,hl){
+  const last=cl.at(-1),r=rsiSeries(cl,14).at(-1),m20=maA(cl,20),m50=maA(cl,50),md=macdA(cl);
+  let stK=NaN,stD=NaN;if(hl&&hl.h&&hl.l){const st=stochSeries(cl,hl.h,hl.l,5,3,3);stK=st.K.at(-1);stD=st.D.at(-1);}
+  const up=last>m20&&m20>m50,dn=last<m20&&m20<m50;
+  const tren=up?'Naik (harga di atas MA20 dan MA50)':dn?'Turun (harga di bawah MA20 dan MA50)':'Sideways / belum jelas';
+  const pos=[],neg=[];
+  if(up)pos.push('tren naik');if(dn)neg.push('tren turun');
+  if(r<30)pos.push('RSI jenuh jual ('+r.toFixed(0)+')');if(r>70)neg.push('RSI jenuh beli ('+r.toFixed(0)+')');
+  if(md.ph>0)pos.push('MACD di atas sinyal');if(md.ph<0)neg.push('MACD di bawah sinyal');
+  if(isFinite(stK)&&stK<20)pos.push('Stochastic oversold ('+stK.toFixed(0)+')');if(isFinite(stK)&&stK>80)neg.push('Stochastic overbought ('+stK.toFixed(0)+')');
+  const sc=pos.length-neg.length,kes=sc>=2?'🟢 Cenderung positif':sc<=-2?'🔴 Cenderung negatif':'⚪ Campuran / netral';
+  return{name,last,r,m20,m50,tren,pos,neg,kes,stK,stD,md};}
+
+/* ---- ANALISA PASAR: skor gabungan indikator + uji historis ---- */
+function skorGabung(cl,h,l){
+  const last=cl.at(-1),r=rsiSeries(cl,14).at(-1),m20=maA(cl,20),m50=maA(cl,50),md=macdA(cl);
+  let stK=NaN;if(h&&l&&h.length===cl.length){const st=stochSeries(cl,h,l,5,3,3);stK=st.K.at(-1);}
+  let sc=0;
+  if(last>m20&&m20>m50)sc++;else if(last<m20&&m20<m50)sc--;
+  if(r<30)sc++;else if(r>70)sc--;
+  if(md.ph>0)sc++;else if(md.ph<0)sc--;
+  if(isFinite(stK)){if(stK<20)sc++;else if(stK>80)sc--;}
+  return sc;}
+function backtestGabung(){
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const ix={};if(HLD)HLD.dates.forEach((d,i)=>ix[d]=i);
+  const H={bull:{w:0,n:0},bear:{w:0,n:0},baseUp:{w:0,n:0},baseDn:{w:0,n:0}};
+  for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);if(a.length<80)continue;
+    const cl=a.map(x=>x[1]);let h=null,l=null;
+    if(HLD&&HLD.high&&HLD.high[k]){h=a.map(x=>{const i=ix[x[0]];return i!=null?HLD.high[k][i]:null;});l=a.map(x=>{const i=ix[x[0]];return i!=null?HLD.low[k][i]:null;});if(h.some(x=>x==null)||l.some(x=>x==null)){h=null;l=null;}}
+    for(let t=60;t<cl.length-10;t++){
+      const sc=skorGabung(cl.slice(0,t+1),h?h.slice(0,t+1):null,l?l.slice(0,t+1):null);
+      const c0=cl[t],c1=cl[t+10];H.baseUp.n++;if(c1>=c0*1.03)H.baseUp.w++;H.baseDn.n++;if(c1<=c0*0.97)H.baseDn.w++;
+      if(sc>=2||sc<=-2){const bull=sc>=2,ok=bull?c1>=c0*1.03:c1<=c0*0.97;const g=H[bull?'bull':'bear'];g.n++;if(ok)g.w++;}}}
+  return H;}
+let BT_GAB=null;
+function renderAnalisaPasar(){if(!PRC)return;
+  if(!BT_GAB)BT_GAB=backtestGabung();
+  const pc=g=>g.n?Math.round(g.w/g.n*100)+'% (dari '+g.n+' kasus)':'belum ada data';
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const rows=[];
+  for(const k in by){const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);if(a.length<60)continue;const cl=a.map(x=>x[1]);
+    let h=null,l=null;if(HLD&&HLD.high&&HLD.high[k]){const ix={};HLD.dates.forEach((d,i)=>ix[d]=i);const hh=a.map(x=>{const i=ix[x[0]];return i!=null?HLD.high[k][i]:null;}),ll=a.map(x=>{const i=ix[x[0]];return i!=null?HLD.low[k][i]:null;});if(!hh.some(x=>x==null)&&!ll.some(x=>x==null)){h=hh;l=ll;}}
+    rows.push({k,sc:skorGabung(cl,h,l),last:cl.at(-1),v:VAL?VAL[k]||0:0});}
+  const kuat=rows.filter(r=>r.sc>=2).sort((x,y)=>y.v-x.v).slice(0,15),lemah=rows.filter(r=>r.sc<=-2).sort((x,y)=>y.v-x.v).slice(0,15);
+  const ch=a=>a.map(r=>`<span class="achip"><b>${esc(r.k)}</b><span class="nm">skor ${r.sc>0?'+':''}${r.sc}</span></span>`).join('')||'<div class="empty">Tidak ada.</div>';
+  $('ap-box').innerHTML=`<h3>Analisa Pasar (gabungan indikator)</h3>
+   <div class="nm" style="line-height:1.6">Skor per saham dari 4 aturan: tren MA20/MA50, RSI(14), MACD (12,26,9), dan Stochastic (5,3,3). Tiap aturan bernilai +1 (bullish), 0, atau −1 (bearish). Total −4 sampai +4.</div>
+   <div class="nm" style="line-height:1.55;margin-top:8px">Pembanding acak (semua hari, periode sama): naik ≥3% dalam 10 hari = <b>${pc(BT_GAB.baseUp)}</b> · turun ≥3% = <b>${pc(BT_GAB.baseDn)}</b>.</div>
+   <div style="margin-top:10px"><b>🟢 Skor ≥ +2 (cenderung naik)</b> — berhasil naik ≥3%: <b>${pc(BT_GAB.bull)}</b></div>
+   <div class="achips" style="margin:6px 0 12px">${ch(kuat)}</div>
+   <div><b>🔴 Skor ≤ −2 (cenderung turun)</b> — berhasil turun ≥3%: <b>${pc(BT_GAB.bear)}</b></div>
+   <div class="achips" style="margin:6px 0 12px">${ch(lemah)}</div>
+   <div class="nm" style="line-height:1.55">Cara menghitung: tiap hari bursa di data, skor dihitung hanya dari data sampai hari itu. "Berhasil" jika setelah 10 hari bursa harga naik ≥3% (skor bullish) atau turun ≥3% (skor bearish). Data hanya sekitar 5 bulan dan periodenya didominasi penurunan, jadi angka bearish sebagian besar mencerminkan arah pasar saat itu. Bandingkan dengan pembanding acak di atas. Ini bukan jaminan dan bukan rekomendasi beli/jual.</div>`;}
+function renderAnalisa(){if(!PRC)return;
+  const by={};PRC.forEach(r=>(by[r.k]=by[r.k]||[]).push([r.d,r.c]));
+  const q=($('an-q').value||'').trim().toUpperCase();
+  const rows=[];
+  for(const k in by){if(q&&!k.includes(q))continue;const a=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0).map(x=>x[1]);if(a.length<60)continue;
+    const srt=by[k].sort((x,y)=>x[0]<y[0]?-1:1).filter(x=>x[1]>0);const d=srt.map(x=>x[0]);
+    let hl=null;if(HLD&&HLD.high&&HLD.high[k]){const ix={};HLD.dates.forEach((dd,i)=>ix[dd]=i);const ha=[],la=[];d.forEach(dd=>{const i=ix[dd];ha.push(i!=null?HLD.high[k][i]:null);la.push(i!=null?HLD.low[k][i]:null);});hl={h:ha,l:la};}
+    rows.push({...analisaCore(k,a,hl),v:VAL?VAL[k]||0:0,d:d.at(-1)});}
+  rows.sort((x,y)=>y.v-x.v);
+  const card=r=>`<div class="card rcard" style="margin-bottom:10px"><div class="rt"><div class="tk">${esc(r.name)}</div><div class="nm">${fmt(r.last,0)}</div></div>
+    <div class="nm" style="margin:4px 0"><b>${r.kes}</b> · ${r.tren}</div>
+    <div class="nm" style="line-height:1.6">Kelebihan: ${r.pos.join(', ')||'–'}<br>Kekhawatiran: ${r.neg.join(', ')||'–'}</div></div>`;
+  $('an-stat').innerHTML=`${rows.length} emiten dianalisis (data s.d. ${tgl(rows.length?rows[0].d:'')}) · urut likuiditas`;
+  $('an-list').innerHTML=rows.slice(0,q?50:40).map(card).join('')||'<div class="empty">Tidak ada hasil.</div>';
+  // IHSG (indeks proksi)
+  const idx=proxyIndex();if(idx.length>60){const v=idx.map(x=>x.v);const r={name:'IHSG (proksi)',last:v.at(-1),r:0};
+    const core=analisaCore('IHSG (proksi)',v,null);
+    $('an-ihsg').innerHTML=`<h3>IHSG · indeks proksi</h3><div class="nm" style="margin-bottom:6px">Dihitung dari rata-rata saham likuid di website (bukan angka IHSG resmi).</div>
+      <div><b>${core.kes}</b> · ${core.tren}</div><div class="nm" style="line-height:1.6;margin-top:6px">Kelebihan: ${core.pos.join(', ')||'–'}<br>Kekhawatiran: ${core.neg.join(', ')||'–'}</div>`;}
+  else $('an-ihsg').innerHTML='<div class="nm">Data indeks proksi belum cukup.</div>';
+  renderAnalisaPasar();}
+$('an-q').addEventListener('input',renderAnalisa);
+
+/* ---- PAKAR: berita & kutipan terbaru yang menyebut nama (judul + tautan sumber) ---- */
+const PK_LIST=[['Prof Gema','"Prof Gema" saham OR IHSG'],['Andri Hakim','"Andri Hakim" saham OR IHSG'],['Hengky Adinata','"Hengky Adinata" saham OR IHSG'],['David Noah','"David Noah" saham OR IHSG'],['Arist MD','"Arist MD" saham OR IHSG'],['Ragnaray','Ragnaray saham OR IHSG']];
+let PK_F='all',PK_ITEMS=[],PK_DONE=false;
+function pkRender(){const cnt={};PK_ITEMS.forEach(i=>cnt[i.p]=(cnt[i.p]||0)+1);
+  $('pk-chips').innerHTML=`<button class="seg-b" data-pf="all" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:${PK_F==='all'?'var(--ac)':'var(--card)'};color:${PK_F==='all'?'#fff':'inherit'};font-weight:700">Semua</button>`+PK_LIST.map(([n])=>`<button class="seg-b" data-pf="${esc(n)}" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bd);background:${PK_F===n?'var(--ac)':'var(--card)'};color:${PK_F===n?'#fff':'inherit'};font-weight:700">${esc(n)} (${cnt[n]||0})</button>`).join('');
+  const rows=PK_ITEMS.filter(i=>PK_F==='all'||i.p===PK_F);
+  $('pk-stat').textContent=PK_ITEMS.length?`${PK_ITEMS.length} berita terbaru (7 hari). Klik judul untuk membaca sumber aslinya.`:'';
+  $('pk-list').innerHTML=rows.length?rows.map(i=>`<a class="box" href="${esc(i.u)}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;border-left:4px solid var(--bl)"><div class="nm">🧠 ${esc(i.p)} · ${esc(i.s)} · ${nwAgo(i.t)}</div><div style="font-weight:700;margin-top:4px">${esc(i.j)}</div></a>`).join(''):`<div class="empty">${PK_ITEMS.length?'Tidak ada berita untuk pakar ini.':'Belum ada berita yang menyebut nama pakar.'}</div>`;}
+async function loadPakar(){
+  const res=await Promise.all(PK_LIST.map(([n,q])=>nwFeedOne('GN:pk',["https://news.google.com/rss/search?q="+encodeURIComponent(q+' when:7d')+"&hl=id&gl=ID&ceid=ID:id"]).then(h=>({n,h}))));
+  const seen=new Set(),items=[];
+  res.forEach(({n,h})=>{const key=n.toLowerCase().split(' ').pop();h.items.forEach(i=>{if(!i.j.toLowerCase().includes(key))return;const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push({...i,p:n,s:i.s.startsWith('GN:')?'Google News':i.s});});});
+  items.sort((a,b)=>b.t-a.t);PK_ITEMS=items;LV.pakar=Date.now();pkRender();}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pf]');if(b){PK_F=b.dataset.pf;pkRender();}});
 document.querySelectorAll('#n-cat button').forEach(b=>b.onclick=()=>{if(NW_CAT===b.dataset.nc)return;NW_CAT=b.dataset.nc;document.querySelectorAll('#n-cat button').forEach(x=>x.classList.toggle('on',x===b));NW=[];NW_ST=null;$('n-list').innerHTML='';$('n-stat').textContent='Memuat berita '+NW_CATS[NW_CAT].nama+'…';$('n-sum').style.display='none';newsTimer();});
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();document.body.classList.toggle('ch-active',t.dataset.t==='chart');if(t.dataset.t==='chart')chInit();});
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.t));store('idx_tab',t.dataset.t);newsTimer();liveTimer();document.body.classList.toggle('ch-active',t.dataset.t==='chart');if(t.dataset.t==='chart')chInit();if(t.dataset.t==='analisa')renderAnalisa();});
 // unit select must exist for parseBroker at init
 $('m-help').innerHTML=HELP.broker.h;
 buildFilters();drawChips();
