@@ -414,6 +414,13 @@ header{position:sticky!important;top:0!important;z-index:20!important;background
 @media(max-width:700px){#s-list{gap:8px}#s-list .rcard{padding:10px}#s-list .rt .tk{font-size:16px}#s-list .rt .rr small{font-size:10px}#s-list .rt .rr b{font-size:12.5px}}
 body.ch-active header{position:relative!important;top:auto!important}
 body.ch-full header{display:none!important}
+/* ---- Menu satu tombol: semua tab muncul sebagai bilah kiri ---- */
+main{margin-left:0!important}
+body:not(.menu-open) nav.tabs{display:none!important}
+body.menu-open nav.tabs{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;grid-template-columns:none!important;position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:270px!important;max-width:82vw!important;height:100%!important;z-index:60!important;background:var(--card)!important;padding:76px 12px 16px!important;margin:0!important;gap:6px!important;overflow-y:auto!important;border-right:1px solid var(--bd)!important;box-shadow:0 0 30px rgba(0,0,0,.25)!important;border-radius:0!important;box-sizing:border-box!important}
+body.menu-open nav.tabs .tab{display:block!important;width:100%!important;text-align:left!important;padding:12px 14px!important;font-size:14px!important;min-height:0!important;white-space:nowrap!important;border-radius:10px!important}
+#menubg{display:none}
+body.menu-open #menubg{display:block;position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.25)}
 </style>
 </head>
 <body>
@@ -421,7 +428,8 @@ body.ch-full header{display:none!important}
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg></div>
     <div><h1>Screener By Afi Cuy</h1><div class="sub"><span class="live"></span>Data otomatis · Bursa Efek Indonesia</div></div>
-    <button class="themebtn" id="stylebtn" type="button" style="margin-left:auto" title="Ganti gaya tampilan" aria-label="Ganti gaya tampilan">✨</button>
+    <button class="themebtn" id="menubtn" type="button" style="margin-left:auto;width:auto;padding:0 12px;font-weight:700" aria-label="Menu" aria-expanded="false">☰ Menu</button>
+    <button class="themebtn" id="stylebtn" type="button" title="Ganti gaya tampilan" aria-label="Ganti gaya tampilan">✨</button>
     <button class="themebtn" id="themebtn" style="margin-left:8px" type="button" title="Ganti tema" aria-label="Ganti tema gelap/terang">🌙</button>
   </div>
 </header>
@@ -1685,6 +1693,13 @@ async function loadPakar(){
   res.forEach(({n,h})=>{const key=n.toLowerCase().split(' ').pop();h.items.forEach(i=>{if(!i.j.toLowerCase().includes(key))return;const k=i.j.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,60);if(seen.has(k))return;seen.add(k);items.push({...i,p:n,s:i.s.startsWith('GN:')?'Google News':i.s});});});
   items.sort((a,b)=>b.t-a.t);PK_ITEMS=items;LV.pakar=Date.now();pkRender();}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-pf]');if(b){PK_F=b.dataset.pf;pkRender();}});
+
+/* ---- Tombol Menu ---- */
+function menuSet(on){document.body.classList.toggle('menu-open',on);$('menubtn').setAttribute('aria-expanded',on?'true':'false');
+  if(!$('menubg')){const d=document.createElement('div');d.id='menubg';d.onclick=()=>menuSet(false);document.body.appendChild(d);}}
+$('menubtn').onclick=()=>menuSet(!document.body.classList.contains('menu-open'));
+document.querySelectorAll('nav.tabs .tab').forEach(t=>t.addEventListener('click',()=>menuSet(false)));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')menuSet(false);});
 document.querySelectorAll('#n-cat button').forEach(b=>b.onclick=()=>{if(NW_CAT===b.dataset.nc)return;NW_CAT=b.dataset.nc;document.querySelectorAll('#n-cat button').forEach(x=>x.classList.toggle('on',x===b));NW=[];NW_ST=null;$('n-list').innerHTML='';$('n-stat').textContent='Memuat berita '+NW_CATS[NW_CAT].nama+'…';$('n-sum').style.display='none';newsTimer();});
 document.querySelectorAll('#n-seg button').forEach(b=>b.onclick=()=>{NW_F=b.dataset.nf;document.querySelectorAll('#n-seg button').forEach(x=>x.classList.toggle('on',x===b));renderNews();});
 $('n-q').oninput=renderNews;
