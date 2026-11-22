@@ -1023,7 +1023,7 @@ function moonPhases(ms0,ms1){const y0=new Date(ms0).getUTCFullYear()+(new Date(m
   for(let k=Math.floor((y0-2000)*12.3685)-1;k<=Math.ceil((y1-2000)*12.3685)+1;k++)for(const ph of[0,.5]){const ms=(moonPhaseJD(k,ph)-2440587.5)*864e5;if(ms>=ms0&&ms<=ms1)out.push({ms,t:ph===0?'baru':'purnama'});}
   return out.sort((a,b)=>a.ms-b.ms);}
 // Gerhana (NASA) dan Merkurius retrograde (almanac/farmersalmanac) — tanggal UTC, toleransi ±1 hari
-const GERHANA=[['2027-02-06','Gerhana Matahari cincin'],['2027-02-20','Gerhana Bulan penumbra'],['2027-07-18','Gerhana Bulan penumbra'],['2027-08-02','Gerhana Matahari total'],['2027-08-17','Gerhana Bulan penumbra']];
+const GERHANA=[['2027-02-06','Gerhana Matahari cincin'],['2027-02-20','Gerhana Bulan penumbra'],['2027-07-18','Gerhana Bulan total'],['2027-08-02','Gerhana Matahari total'],['2027-08-17','Gerhana Bulan penumbra']];
 const MERK=[['2026-10-24','2026-11-13'],['2027-02-09','2027-03-03'],['2027-06-10','2027-07-04'],['2027-10-07','2027-10-28']];
 const wibDay=ms=>new Date(ms+7*36e5).toISOString().slice(0,10);
 const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'],BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
