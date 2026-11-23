@@ -3,7 +3,7 @@ name: Update data & deploy website
 on:
   schedule:
     # 12:30 UTC = 19:30 WIB, Senin–Jumat (setelah bursa tutup & broker summary dirilis)
-    - cron: "30 12 * * 1-5"
+    - cron: "55 9 * * 1-5"   # 16:55 WIB, setelah bursa tutup (Senin-Jumat)
   workflow_dispatch: {}   # tombol "Run workflow" untuk update manual
   push:
     branches: [main]
